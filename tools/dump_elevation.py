@@ -6,9 +6,9 @@ The v1 model consumes these as raw predictors (v0 only kept derived scores).
 """
 import json, math, time, urllib.request, urllib.parse, os
 
-NORTH, SOUTH = 63.52, 63.28
-WEST,  EAST  = 12.80, 13.40
-NROWS, NCOLS = 44, 60
+NORTH, SOUTH = 63.62, 63.18
+WEST,  EAST  = 12.80, 13.45
+NROWS, NCOLS = 76, 60
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT  = os.path.join(HERE, "data", "layers", "elevation.json")
 API  = "https://api.opentopodata.org/v1/eudem25m"

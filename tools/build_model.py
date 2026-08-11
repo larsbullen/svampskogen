@@ -90,22 +90,44 @@ def row(i):
         r.append((v - mean) / sd)
     return r
 
-# ---- presences: nearest grid cell for each find within the grid ----
-occ = json.load(open(os.path.join(HERE, "data", "occurrences.geojson")))
-pres_idx = set()
-for f in occ.get("features", []):
-    lon, lat = f["geometry"]["coordinates"]
-    if not (SOUTH <= lat <= NORTH and WEST <= lon <= EAST): continue
+def cell_of(lon, lat):
+    if not (SOUTH <= lat <= NORTH and WEST <= lon <= EAST): return None
     i = min(NROWS - 1, max(0, int((NORTH - lat) / dlat)))
     j = min(NCOLS - 1, max(0, int((lon - WEST) / dlon)))
     idx = i * NCOLS + j
-    if valid[idx]: pres_idx.add(idx)
+    return idx if valid[idx] else None
+
+# ---- presences: edible GBIF finds + the user's own reported finds ----
+# data/myfinds.geojson is the "Exportera mina fynd" file dropped into the repo —
+# this closes the loop so field finds train the model. Thinned to unique cells.
+pres_idx = set()
+n_user = 0
+for src in ("occurrences.geojson", "myfinds.geojson", "mina-svampfynd.geojson"):
+    p = os.path.join(HERE, "data", src)
+    if not os.path.exists(p): continue
+    for f in json.load(open(p)).get("features", []):
+        lon, lat = f["geometry"]["coordinates"]
+        c = cell_of(lon, lat)
+        if c is not None:
+            pres_idx.add(c)
+            if src != "occurrences.geojson": n_user += 1
 pres_idx = sorted(pres_idx)
 
-# ---- background: random valid cells (target-group approximation) ----
+# ---- background: target-group (all recorded fungi) to cancel recorder/effort
+# bias; falls back to random if the target-group layer is missing/sparse. ----
 valid_idx = [i for i in range(N) if valid[i]]
-n_bg = min(len(valid_idx), max(1500, 40 * len(pres_idx)))
-background = random.sample(valid_idx, n_bg)
+bg_method = "random"
+background = []
+tg_path = os.path.join(L, "targetgroup.geojson")
+if os.path.exists(tg_path):
+    tg_cells = [c for f in json.load(open(tg_path)).get("features", [])
+                for c in (cell_of(*f["geometry"]["coordinates"]),) if c is not None]
+    if len(tg_cells) >= 200:
+        background = tg_cells if len(tg_cells) <= 3000 else random.sample(tg_cells, 3000)
+        bg_method = "target-group (all-fungi effort surface)"
+if not background:
+    n_bg = min(len(valid_idx), max(1500, 40 * len(pres_idx)))
+    background = random.sample(valid_idx, n_bg)
 
 X = [row(i) for i in pres_idx] + [row(i) for i in background]
 y = [1.0] * len(pres_idx) + [0.0] * len(background)
@@ -168,12 +190,15 @@ out = {
         "model": "v1-logistic-sdm",
         "predictors": feat_names,
         "layers_used": used,
-        "n_presence": len(pres_idx), "n_background": len(background),
+        "n_presence": len(pres_idx), "n_user_finds": n_user,
+        "n_background": len(background), "background_method": bg_method,
         "train_auc": train_auc,
         "built": "2026-08-11",
         "note": ("Presence-background logistic SDM on stacked open-data predictors. "
-                 "Relative suitability (0=low,100=high). n_presence is small and "
-                 "AUC is optimistic under spatial autocorrelation — treat as a guide."),
+                 "Relative suitability (0=low,100=high). Presences include the "
+                 "user's own reported finds; background is the all-fungi effort "
+                 "surface (bias correction). Still few presences — AUC is "
+                 "optimistic under spatial autocorrelation; treat as a guide."),
     },
     "scores": scores,
 }
