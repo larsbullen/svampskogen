@@ -41,7 +41,9 @@ cols["slope"] = elev["slope"]
 if soil and "values" in soil:
     cols["soil"] = soil["values"]
 if forest:
-    for k in ("tree_height", "volume"):
+    # tall_cover_frac (canopy cover, full coverage) is the robust maturity proxy;
+    # tree_height_mean_m / volume added if present.
+    for k in ("tall_cover_frac", "tree_height_mean_m", "volume"):
         if k in forest and isinstance(forest[k], list) and len(forest[k]) == N:
             cols[k] = forest[k]
     # derive a conifer indicator if the species labels make it inferable
@@ -62,7 +64,8 @@ cols["elev2"] = [e * e if e is not None else None for e in cols["elev"]]
 # background here is *also* mostly conifer, so a species-preference coefficient
 # is unreliable — species instead drives the forest mask below. Add it back to
 # this list once there are enough presences to estimate it.
-feat_names = [k for k in ["elev", "elev2", "slope", "soil", "tree_height", "volume"] if k in cols]
+# Keep the feature set modest given few presences: terrain + wetness + canopy cover.
+feat_names = [k for k in ["elev", "elev2", "slope", "soil", "tall_cover_frac"] if k in cols]
 
 # ---- validity mask: need elevation; drop cells above the local tree line hard? no — let model learn ----
 valid = [cols["elev"][i] is not None for i in range(N)]
@@ -153,7 +156,8 @@ for i in range(N):
 used = {
     "elevation+slope": True,
     "soil_moisture": "soil" in cols,
-    "forest_structure": any(k in cols for k in ("tree_height", "volume")),
+    "forest_canopy_cover": "tall_cover_frac" in cols,
+    "forest_structure": any(k in cols for k in ("tree_height_mean_m", "volume")),
     "conifer_class": "conifer" in cols,
     "forest_mask": bool(is_forest),
 }
