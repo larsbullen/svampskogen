@@ -165,13 +165,23 @@ allp = [(predict(i), 1) for i in pres_idx] + [(predict(i), 0) for i in backgroun
 train_auc = auc(allp)
 
 # ---- score every cell; mask non-forest to 0, invalid to -1; scale to 0..100 ----
+pres_set = set(pres_idx)
+tcf = cols.get("tall_cover_frac")   # cell-aggregate canopy cover (more robust than center-pixel is_forest)
+def forest_ok(i):
+    # true forest, OR partial canopy (≥10%) to keep tree-line mountain birch etc.
+    if is_forest and len(is_forest) == N and is_forest[i] == 1:
+        return True
+    if tcf and tcf[i] is not None and tcf[i] >= 0.10:
+        return True
+    return False
 raw = [predict(i) if valid[i] else None for i in range(N)]
 mx = max((v for v in raw if v is not None), default=1.0) or 1.0
 scores = []
 for i in range(N):
     if raw[i] is None:
         scores.append(-1); continue
-    if is_forest and len(is_forest) == N and is_forest[i] == 0:
+    # never mask a cell where mushrooms were actually found; else require some forest/canopy
+    if i not in pres_set and is_forest and not forest_ok(i):
         scores.append(0); continue
     scores.append(round(raw[i] / mx * 100))
 

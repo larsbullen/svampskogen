@@ -1,5 +1,5 @@
 /* Svampfinder service worker — offline app shell + tile caching */
-const SHELL = 'svampfinder-shell-v6';
+const SHELL = 'svampfinder-shell-v7';
 const TILES = 'svampfinder-tiles-v1';
 
 const CORE = [
