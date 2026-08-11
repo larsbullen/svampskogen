@@ -22,15 +22,20 @@ const SPECIES = {
 const map = L.map('map', { zoomControl: true, attributionControl: true }).setView(ARE, 11);
 map.zoomControl.setPosition('topright');
 
-const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-  maxZoom: 17,
-  attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA) · © OpenStreetMap',
-});
+// Esri tiles are reliable and key-free (OpenTopoMap rate-limits too hard for this).
+const esriTopo = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
+const esriImg = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
 const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '© OpenStreetMap',
+  maxZoom: 19, attribution: '&copy; OpenStreetMap',
 });
-topo.addTo(map);
-const layersCtl = L.control.layers({ 'Terräng': topo, 'Karta': osm }, {}, { position: 'topright' }).addTo(map);
+esriTopo.addTo(map);
+const layersCtl = L.control.layers(
+  { 'Terräng': esriTopo, 'Satellit': esriImg, 'Karta': osm }, {},
+  { position: 'topright' }).addTo(map);
 
 /* ---------- Layers ---------- */
 const gbifLayer = L.layerGroup().addTo(map);

@@ -1,5 +1,5 @@
 /* Svampfinder service worker — offline app shell + tile caching */
-const SHELL = 'svampfinder-shell-v3';
+const SHELL = 'svampfinder-shell-v4';
 const TILES = 'svampfinder-tiles-v1';
 
 const CORE = [
@@ -36,7 +36,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
 
   // Map tiles: stale-while-revalidate, capped cache.
-  if (/tile\.opentopomap\.org|tile\.openstreetmap\.org/.test(url.hostname)) {
+  if (/server\.arcgisonline\.com|tile\.openstreetmap\.org|tile\.opentopomap\.org/.test(url.hostname)) {
     e.respondWith(
       caches.open(TILES).then(async cache => {
         const hit = await cache.match(req);
