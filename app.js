@@ -45,17 +45,27 @@ function speciesColor(sv) {
   return (SPECIES[sv] && SPECIES[sv].color) || '#7A8A72';
 }
 
-/* ---------- Habitat suitability overlay (v0 terrain heuristic) ---------- */
-fetch('data/suitability.json')
-  .then(r => r.json())
-  .then(grid => {
-    const layer = buildSuitabilityOverlay(grid);
-    layer.addTo(map);
-    layersCtl.addOverlay(layer, 'Habitatmodell v1');
-    const leg = document.getElementById('suitLegend');
-    if (leg) leg.hidden = false;
-  })
-  .catch(() => {});
+/* ---------- Habitat overlay × weather forecast ---------- */
+// The map shows habitat(where) × fruiting(when). Habitat is the static SDM
+// grid; fruiting is a daily 0..1 index (SMHI rain+temp). The date picker scales
+// every cell's score by fruiting(date) so dry/cold days dim the whole map.
+let suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
+
+Promise.all([
+  fetch('data/suitability.json').then(r => r.json()),
+  fetch('data/forecast.json').then(r => r.json()).catch(() => null),
+]).then(([grid, fc]) => {
+  suitGrid = grid;
+  const m = grid.meta;
+  const bounds = [[m.south, m.west], [m.north, m.east]];
+  if (fc && fc.days && fc.days.length) forecastDays = fc.days;
+  const mult0 = forecastDays ? (forecastDays[fcIndex = nearestDay(todayISO())].fruiting) : 1;
+  suitOverlay = L.imageOverlay(renderSuit(grid, mult0), bounds,
+    { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
+  layersCtl.addOverlay(suitOverlay, 'Habitatmodell v1');
+  const leg = document.getElementById('suitLegend'); if (leg) leg.hidden = false;
+  if (forecastDays) initForecast();
+}).catch(() => {});
 
 // Green → gold → orange ramp; below 25 fully transparent to reduce clutter.
 function suitColor(score) {
@@ -78,27 +88,74 @@ function suitColor(score) {
   return [last[1], last[2], last[3], last[4]];
 }
 
-function buildSuitabilityOverlay(grid) {
-  const { nrows, ncols, north, south, west, east } = grid.meta;
+// Render the grid to a data-URL, scaling every score by the fruiting multiplier.
+function renderSuit(grid, mult) {
+  const { nrows, ncols } = grid.meta;
+  const n = nrows * ncols;
   const cv = document.createElement('canvas');
   cv.width = ncols; cv.height = nrows;
   const ctx = cv.getContext('2d');
   const img = ctx.createImageData(ncols, nrows);
-  for (let i = 0; i < nrows; i++) {
-    for (let j = 0; j < ncols; j++) {
-      const s = grid.scores[i * ncols + j];
-      const p = (i * ncols + j) * 4;
-      if (s < 0) { img.data[p + 3] = 0; continue; }
-      const c = suitColor(s);
-      img.data[p] = Math.round(c[0]);
-      img.data[p + 1] = Math.round(c[1]);
-      img.data[p + 2] = Math.round(c[2]);
-      img.data[p + 3] = Math.round(c[3] * 255);
-    }
+  for (let idx = 0; idx < n; idx++) {
+    const s = grid.scores[idx];
+    const p = idx * 4;
+    if (s < 0) { img.data[p + 3] = 0; continue; }
+    const c = suitColor(s * mult);
+    img.data[p] = Math.round(c[0]);
+    img.data[p + 1] = Math.round(c[1]);
+    img.data[p + 2] = Math.round(c[2]);
+    img.data[p + 3] = Math.round(c[3] * 255);
   }
   ctx.putImageData(img, 0, 0);
-  return L.imageOverlay(cv.toDataURL(), [[south, west], [north, east]],
-    { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' });
+  return cv.toDataURL();
+}
+
+/* ---------- Forecast date picker ---------- */
+function nearestDay(dateStr) {
+  const target = Date.parse(dateStr + 'T00:00:00Z');
+  let best = 0, bestD = Infinity;
+  forecastDays.forEach((d, i) => {
+    const dd = Math.abs(Date.parse(d.date + 'T00:00:00Z') - target);
+    if (dd < bestD) { bestD = dd; best = i; }
+  });
+  return best;
+}
+function fmtDate(s) {
+  const mn = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+  const [, m, d] = s.split('-');
+  return (+d) + ' ' + mn[+m - 1];
+}
+function fruitingLevel(f) { return f >= 0.65 ? 3 : f >= 0.4 ? 2 : f >= 0.18 ? 1 : 0; }
+
+let rafId = null, pendingMult = null;
+function scheduleRender(mult) {
+  pendingMult = mult;
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => { rafId = null; suitOverlay.setUrl(renderSuit(suitGrid, pendingMult)); });
+}
+
+function initForecast() {
+  document.getElementById('forecast').hidden = false;
+  const slider = document.getElementById('fcSlider');
+  slider.min = 0; slider.max = forecastDays.length - 1; slider.value = fcIndex;
+  document.getElementById('fcStart').textContent = fmtDate(forecastDays[0].date);
+  document.getElementById('fcEnd').textContent = fmtDate(forecastDays[forecastDays.length - 1].date);
+  slider.addEventListener('input', () => setDay(+slider.value));
+  document.getElementById('fcNow').addEventListener('click', () => {
+    const i = nearestDay(todayISO());
+    slider.value = i; setDay(i);
+  });
+  setDay(fcIndex);
+}
+
+function setDay(i) {
+  fcIndex = i;
+  const d = forecastDays[i];
+  scheduleRender(d.fruiting);
+  const chip = document.getElementById('fcChip');
+  chip.textContent = d.verdict + (d.reason ? ' · ' + d.reason : '');
+  chip.className = 'fc-chip lvl' + fruitingLevel(d.fruiting);
+  document.getElementById('fcDate').textContent = fmtDate(d.date) + (d.forecast ? ' · prognos' : '');
 }
 
 /* ---------- Historical (GBIF) finds ---------- */

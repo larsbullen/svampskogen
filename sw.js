@@ -1,5 +1,5 @@
 /* Svampfinder service worker — offline app shell + tile caching */
-const SHELL = 'svampfinder-shell-v7';
+const SHELL = 'svampfinder-shell-v8';
 const TILES = 'svampfinder-tiles-v1';
 
 const CORE = [
@@ -10,6 +10,7 @@ const CORE = [
   './manifest.webmanifest',
   './data/occurrences.geojson',
   './data/suitability.json',
+  './data/forecast.json',
   './vendor/leaflet.js',
   './vendor/leaflet.css',
   './vendor/marker-icon.png',

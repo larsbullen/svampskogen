@@ -95,6 +95,17 @@
     </div>
   </form>
 
+  <!-- Weather-driven fruiting forecast -->
+  <div class="forecast" id="forecast" hidden>
+    <div class="fc-row">
+      <span class="fc-chip lvl2" id="fcChip">—</span>
+      <span class="fc-date" id="fcDate"></span>
+      <button type="button" class="fc-now" id="fcNow">Nu</button>
+    </div>
+    <input type="range" class="fc-slider" id="fcSlider" min="0" max="0" value="0" aria-label="Välj datum för svampprognos" />
+    <div class="fc-scale"><span id="fcStart"></span><span class="fc-cap">🍄 Svampprognos</span><span id="fcEnd"></span></div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="vendor/leaflet.js"></script>
