@@ -58,7 +58,12 @@ Promise.all([
   suitGrid = grid;
   const m = grid.meta;
   const bounds = [[m.south, m.west], [m.north, m.east]];
-  if (fc && fc.days && fc.days.length) forecastDays = fc.days;
+  if (fc && fc.days && fc.days.length) {
+    forecastDays = fc.days;
+    // Window to ~2 weeks back + the 10-day outlook — drop the dead off-season.
+    const ti = nearestDay(todayISO());
+    forecastDays = forecastDays.slice(Math.max(0, ti - 14));
+  }
   const mult0 = forecastDays ? (forecastDays[fcIndex = nearestDay(todayISO())].fruiting) : 1;
   suitOverlay = L.imageOverlay(renderSuit(grid, mult0), bounds,
     { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
