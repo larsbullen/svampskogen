@@ -64,10 +64,6 @@ body {
 .pop .pop-tag.gbif { background:var(--surface-2); color:var(--muted); }
 .pop .pop-tag.mine { background:var(--accent-soft); color:var(--accent-ink); }
 .pop .pop-del { display:block; margin-top:.5rem; background:none; border:none; color:var(--danger); font-size:.78rem; padding:0; cursor:pointer; text-decoration: underline; }
-.pop .zone-now { margin-top:.5rem; padding-top:.45rem; border-top:1px solid var(--line); font-size:.86rem; color:var(--ink); }
-.pop .zone-now b { color: var(--accent-ink); }
-@media (prefers-color-scheme: dark) { .pop .zone-now b { color: var(--accent); } }
-:root[data-theme="dark"] .pop .zone-now b { color: var(--accent); }
 
 /* ---------- Markers ---------- */
 .my-find-icon { display:grid; place-items:center; }

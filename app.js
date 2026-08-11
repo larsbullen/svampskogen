@@ -50,13 +50,11 @@ function speciesColor(sv) {
 // grid; fruiting is a daily 0..1 index (SMHI rain+temp). The date picker scales
 // every cell's score by fruiting(date) so dry/cold days dim the whole map.
 let suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
-let zonesLayer = null, openZone = null;
 
 Promise.all([
   fetch('data/suitability.json').then(r => r.json()),
   fetch('data/forecast.json').then(r => r.json()).catch(() => null),
-  fetch('data/zones.geojson').then(r => r.json()).catch(() => null),
-]).then(([grid, fc, zones]) => {
+]).then(([grid, fc]) => {
   suitGrid = grid;
   const m = grid.meta;
   const bounds = [[m.south, m.west], [m.north, m.east]];
@@ -66,64 +64,13 @@ Promise.all([
     const ti = nearestDay(todayISO());
     forecastDays = forecastDays.slice(Math.max(0, ti - 14));
   }
-  fcIndex = forecastDays ? nearestDay(todayISO()) : 0;
-
-  // Zones = tappable best-habitat areas, recoloured by the forecast (default view).
-  if (zones && zones.features) {
-    zonesLayer = L.geoJSON(zones, { style: zoneStyle, onEachFeature: onZone }).addTo(map);
-    layersCtl.addOverlay(zonesLayer, 'Zoner');
-  }
-  // Heatmap kept as an optional layer.
-  suitOverlay = L.imageOverlay(renderSuit(grid, curMult()), bounds,
-    { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' });
-  layersCtl.addOverlay(suitOverlay, 'Värmekarta');
-  map.on('overlayadd', (e) => { if (e.layer === suitOverlay) scheduleRender(curMult()); });
-
+  const mult0 = forecastDays ? (forecastDays[fcIndex = nearestDay(todayISO())].fruiting) : 1;
+  suitOverlay = L.imageOverlay(renderSuit(grid, mult0), bounds,
+    { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
+  layersCtl.addOverlay(suitOverlay, 'Habitatmodell v1');
   const leg = document.getElementById('suitLegend'); if (leg) leg.hidden = false;
   if (forecastDays) initForecast();
 }).catch(() => {});
-
-/* ---------- Zones ---------- */
-function curMult() { return forecastDays ? forecastDays[fcIndex].fruiting : 1; }
-
-function zoneFill(base) {
-  const eff = base * curMult();
-  const c = suitColor(Math.max(eff, 25));                   // keep a hue even when faint
-  const op = Math.max(0.12, Math.min(0.62, 0.12 + eff / 100 * 0.55));
-  return { fill: `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`, op };
-}
-function zoneStyle(f) {
-  const z = zoneFill(f.properties.base);
-  return { fillColor: z.fill, fillOpacity: z.op, color: '#3a5a44', weight: 1, opacity: 0.5 };
-}
-function onZone(feature, layer) {
-  layer.bindPopup(() => zoneCard(feature), { maxWidth: 260 });
-  layer.on('popupopen', () => { openZone = { feature, layer }; });
-  layer.on('popupclose', () => { openZone = null; });
-}
-function effVerdict(eff) {
-  const d = forecastDays ? forecastDays[fcIndex] : null;
-  const why = d && d.reason ? ' · ' + d.reason : '';
-  if (eff >= 55) return 'Gå nu 🍄';
-  if (eff >= 35) return 'Kan vara värt';
-  if (eff >= 18) return 'Tveksamt' + why;
-  return 'Vänta' + why;
-}
-function zoneCard(feature) {
-  const p = feature.properties;
-  const eff = Math.round(p.base * curMult());
-  const d = forecastDays ? forecastDays[fcIndex] : null;
-  const when = d ? fmtDate(d.date) + (d.forecast ? ' · prognos' : '') : '';
-  const canopy = p.canopy != null ? Math.round(p.canopy * 100) + '% krontäckning' : '';
-  const bits = [p.area_ha + ' ha', p.elev != null ? p.elev + ' m' : '', canopy, p.wetness]
-    .filter(Boolean).join(' · ');
-  return `<div class="pop">
-    <div class="pop-sv">${escapeHtml(p.type)}</div>
-    <div class="pop-meta">${escapeHtml(bits)}</div>
-    <div class="pop-meta">Habitat: <b>${escapeHtml(p.base_label)}</b></div>
-    <div class="zone-now">${when}: <b>${escapeHtml(effVerdict(eff))}</b></div>
-  </div>`;
-}
 
 // Green → gold → orange ramp; below 25 fully transparent to reduce clutter.
 function suitColor(score) {
@@ -209,9 +156,7 @@ function initForecast() {
 function setDay(i) {
   fcIndex = i;
   const d = forecastDays[i];
-  if (zonesLayer && map.hasLayer(zonesLayer)) zonesLayer.setStyle(zoneStyle);
-  if (openZone) openZone.layer.setPopupContent(zoneCard(openZone.feature));
-  if (map.hasLayer(suitOverlay)) scheduleRender(d.fruiting);
+  scheduleRender(d.fruiting);
   const chip = document.getElementById('fcChip');
   chip.textContent = d.verdict + (d.reason ? ' · ' + d.reason : '');
   chip.className = 'fc-chip lvl' + fruitingLevel(d.fruiting);
