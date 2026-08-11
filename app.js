@@ -132,6 +132,21 @@ function fmtDate(s) {
 }
 function fruitingLevel(f) { return f >= 0.65 ? 3 : f >= 0.4 ? 2 : f >= 0.18 ? 1 : 0; }
 
+// Colour per fruiting level (dry → peak); used to paint each slider step.
+function fcStepColor(f) { return ['#C9CBBE', '#A7C58A', '#E4B24A', '#D97A3C'][fruitingLevel(f)]; }
+function buildTrackGradient() {
+  const n = forecastDays.length;
+  if (n < 2) return fcStepColor(forecastDays[0].fruiting);
+  const stops = [];
+  forecastDays.forEach((d, i) => {                 // each day centred on its thumb position
+    const c = fcStepColor(d.fruiting);
+    const a = Math.max(0, (i - 0.5) / (n - 1)) * 100;
+    const b = Math.min(1, (i + 0.5) / (n - 1)) * 100;
+    stops.push(`${c} ${a.toFixed(2)}%`, `${c} ${b.toFixed(2)}%`);
+  });
+  return `linear-gradient(90deg, ${stops.join(', ')})`;
+}
+
 let rafId = null, pendingMult = null;
 function scheduleRender(mult) {
   pendingMult = mult;
@@ -143,6 +158,7 @@ function initForecast() {
   document.getElementById('forecast').hidden = false;
   const slider = document.getElementById('fcSlider');
   slider.min = 0; slider.max = forecastDays.length - 1; slider.value = fcIndex;
+  slider.style.setProperty('--fc-track', buildTrackGradient());
   document.getElementById('fcStart').textContent = fmtDate(forecastDays[0].date);
   document.getElementById('fcEnd').textContent = fmtDate(forecastDays[forecastDays.length - 1].date);
   slider.addEventListener('input', () => setDay(+slider.value));
