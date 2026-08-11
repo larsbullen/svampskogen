@@ -1,0 +1,69 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.004851,
+     63.456417
+    ]
+   },
+   "properties": {
+    "id": "f_msosbx0qo6kh9",
+    "source": "user",
+    "sv": "Kantarell",
+    "sci": "Cantharellus cibarius",
+    "date": "2023-08-11",
+    "count": "Korg",
+    "notes": "",
+    "created": "2026-08-11"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.244491,
+     63.407663
+    ]
+   },
+   "properties": {
+    "id": "f_msosehwy9joty",
+    "source": "user",
+    "sv": "Trattkantarell",
+    "sci": "Craterellus tubaeformis",
+    "date": "2025-10-04",
+    "count": "Jackpot",
+    "notes": "",
+    "created": "2026-08-11"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.994841,
+     63.447478
+    ]
+   },
+   "properties": {
+    "id": "f_msosg7zy96mkq",
+    "source": "user",
+    "sv": "Trattkantarell",
+    "sci": "Craterellus tubaeformis",
+    "date": "2022-08-29",
+    "count": "Korg",
+    "notes": "",
+    "created": "2026-08-11"
+   }
+  }
+ ],
+ "meta": {
+  "app": "svampfinder",
+  "exported": "2026-08-11"
+ }
+}
