@@ -1,0 +1,43 @@
+name: Refresh mushroom forecast
+
+# Keeps data/forecast.json current so the "go now" forecast never goes stale.
+# The habitat model is static and is NOT rebuilt here (it only changes when new
+# finds are added). Pushing the refreshed file auto-triggers the Pages deploy.
+
+on:
+  schedule:
+    - cron: '0 5 * * *'      # daily 05:00 UTC (~07:00 Åre summer time)
+  workflow_dispatch: {}       # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Rebuild forecast from SMHI
+        run: python3 tools/build_forecast.py
+
+      - name: Commit & push if the forecast changed
+        run: |
+          if git diff --quiet -- data/forecast.json; then
+            echo "Forecast unchanged — nothing to commit."
+          else
+            git config user.name  "svampskogen-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/forecast.json
+            git commit -m "chore: daily forecast refresh"
+            git push
+            echo "Forecast updated and pushed."
+          fi

@@ -130,7 +130,7 @@ def main():
 
     out = {
         "meta": {
-            "built": "2026-08-11",
+            "built": datetime.date.today().isoformat(),
             "precip_station": pst, "temp_station": tst,
             "source": "SMHI metobs (history) + snow1g forecast (CC BY 4.0)",
             "formula": "fruiting = rain_factor(21-day precip) x temp_factor(bell ~11C)",
