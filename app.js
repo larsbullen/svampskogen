@@ -410,13 +410,16 @@ document.getElementById('btnExport').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
 });
 
-/* ---------- Panel collapse ---------- */
-document.getElementById('panelToggle').addEventListener('click', (e) => {
-  const panel = document.getElementById('panel');
-  const collapsed = panel.classList.toggle('collapsed');
-  e.currentTarget.textContent = collapsed ? '+' : '–';
-  e.currentTarget.setAttribute('aria-expanded', String(!collapsed));
-});
+/* ---------- Menu panel (hamburger) ---------- */
+const menuBtn = document.getElementById('menuBtn');
+function setMenu(open) {
+  document.body.classList.toggle('menu-open', open);
+  menuBtn.setAttribute('aria-expanded', String(open));
+}
+menuBtn.addEventListener('click', () => setMenu(true));
+document.getElementById('panelToggle').addEventListener('click', () => setMenu(false));
+// Open by default on wider screens; collapsed to the hamburger on mobile.
+setMenu(window.matchMedia('(min-width: 760px)').matches);
 
 /* ---------- Helpers ---------- */
 function todayISO() { return new Date().toISOString().slice(0, 10); }

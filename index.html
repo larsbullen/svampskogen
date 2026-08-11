@@ -20,11 +20,16 @@
 <body>
   <div id="map" aria-label="Karta"></div>
 
+  <!-- Menu button (opens the info panel) -->
+  <button class="menu-btn" id="menuBtn" aria-label="Öppna meny" aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+
   <!-- Info / legend panel -->
   <section class="panel" id="panel">
     <header class="panel-head">
       <h1>Svampfinder <span class="loc">Åre</span></h1>
-      <button class="panel-toggle" id="panelToggle" aria-label="Fäll ihop panel" aria-expanded="true">–</button>
+      <button class="panel-toggle" id="panelToggle" aria-label="Stäng meny">✕</button>
     </header>
     <div class="panel-body" id="panelBody">
       <div class="counts">

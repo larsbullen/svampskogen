@@ -56,6 +56,17 @@ body {
 }
 .leaflet-bar a { border-bottom-color: var(--line) !important; }
 
+/* Custom layers-toggle icon (Leaflet's layers.png isn't vendored).
+   Uses a CSS mask so the colour comes from the theme token. */
+.leaflet-control-layers-toggle {
+  width: 40px !important; height: 40px !important;
+  background-image: none !important;
+  background-color: var(--forest);
+  --layers-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='1.9'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%203%203%208l9%205%209-5-9-5Z'/%3E%3Cpath%20d='M3%2012l9%205%209-5'/%3E%3Cpath%20d='M3%2016l9%205%209-5'/%3E%3C/svg%3E");
+  -webkit-mask: var(--layers-icon) center / 22px 22px no-repeat;
+  mask: var(--layers-icon) center / 22px 22px no-repeat;
+}
+
 /* ---------- Popup content ---------- */
 .pop .pop-sv { font-weight: 700; font-size: 1rem; }
 .pop .pop-sci { font-family: var(--serif); font-style: italic; color: var(--forest); font-size: .85rem; margin-bottom: .35rem; }
@@ -81,20 +92,34 @@ body {
 @keyframes drop { from { transform: rotate(-45deg) translateY(-8px); opacity: 0; } }
 
 /* ---------- Info panel ---------- */
+.menu-btn {
+  position: fixed; z-index: 600; top: max(.75rem, env(safe-area-inset-top)); left: .75rem;
+  width: 2.9rem; height: 2.9rem; border-radius: 14px; cursor: pointer;
+  border: 1px solid var(--line); color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  display: grid; place-items: center; box-shadow: var(--shadow-l);
+}
+.menu-btn:active { transform: scale(.94); }
+body.menu-open .menu-btn { display: none; }
+
 .panel {
-  position: fixed; top: max(.75rem, env(safe-area-inset-top)); left: .75rem; z-index: 500;
-  width: min(19rem, calc(100vw - 5.5rem));
+  position: fixed; top: max(.75rem, env(safe-area-inset-top)); left: .75rem; z-index: 600;
+  width: min(19rem, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 1.5rem); max-height: calc(100dvh - 1.5rem);
+  overflow: hidden auto;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-l);
-  overflow: hidden;
+  display: none;
 }
+body.menu-open .panel { display: block; }
 .panel-head { display:flex; align-items:center; justify-content:space-between; padding:.7rem .5rem .7rem .95rem; }
 .panel h1 { margin:0; font-family:var(--serif); font-weight:600; font-size:1.15rem; letter-spacing:-.01em; }
 .panel h1 .loc { color: var(--accent); font-style: italic; }
 .panel-toggle { width:1.9rem; height:1.9rem; border:none; background:var(--surface-2); color:var(--ink-2); border-radius:8px; font-size:1.1rem; line-height:1; cursor:pointer; }
 .panel-body { padding: 0 .95rem .95rem; }
-.panel.collapsed .panel-body { display: none; }
+.panel-toggle:active { transform: scale(.92); }
 
 .counts { display:flex; gap:.5rem; margin-bottom:.8rem; }
 .count { flex:1; background:var(--surface-2); border-radius:10px; padding:.5rem .6rem; }
