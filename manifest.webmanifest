@@ -1,0 +1,16 @@
+{
+  "name": "Svampfinder — Åre",
+  "short_name": "Svampfinder",
+  "description": "Karta över potentiella svampställen kring Åre, och dina egna fynd.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12140E",
+  "theme_color": "#33553F",
+  "lang": "sv",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

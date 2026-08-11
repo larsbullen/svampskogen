@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Svampfinder — Åre</title>
+  <meta name="description" content="Karta över potentiella svampställen kring Åre, och dina egna fynd." />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <meta name="robots" content="noai, noimageai" />
+  <meta name="theme-color" content="#33553F" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#12140E" media="(prefers-color-scheme: dark)" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Svampfinder" />
+  <link rel="stylesheet" href="vendor/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="map" aria-label="Karta"></div>
+
+  <!-- Info / legend panel -->
+  <section class="panel" id="panel">
+    <header class="panel-head">
+      <h1>Svampfinder <span class="loc">Åre</span></h1>
+      <button class="panel-toggle" id="panelToggle" aria-label="Fäll ihop panel" aria-expanded="true">–</button>
+    </header>
+    <div class="panel-body" id="panelBody">
+      <div class="counts">
+        <div class="count"><b id="cGbif">0</b><span>kända fynd</span></div>
+        <div class="count"><b id="cMine">0</b><span>mina fynd</span></div>
+      </div>
+      <ul class="legend" id="legend"></ul>
+      <div class="panel-actions">
+        <button class="btn ghost" id="btnExport">Exportera mina fynd</button>
+      </div>
+      <p class="disclaimer">Kända fynd: GBIF / Artportalen (CC0). Kartan visar var svamp <em>hittats</em> — den avgör aldrig ätlighet.</p>
+    </div>
+  </section>
+
+  <!-- Locate + report controls -->
+  <button class="ctl locate" id="btnLocate" aria-label="Visa min plats" title="Min plats">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm9 3h-2.06A7 7 0 0013 5.06V3h-2v2.06A7 7 0 005.06 11H3v2h2.06A7 7 0 0011 18.94V21h2v-2.06A7 7 0 0018.94 13H21v-2zm-9 6a5 5 0 110-10 5 5 0 010 10z"/></svg>
+  </button>
+  <button class="fab" id="btnReport">
+    <span class="fab-plus">＋</span> Rapportera fynd
+  </button>
+
+  <!-- Report sheet -->
+  <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+  <form class="sheet" id="sheet" hidden aria-label="Rapportera fynd">
+    <div class="sheet-grip"></div>
+    <h2>Nytt fynd</h2>
+
+    <label class="field-label">Plats</label>
+    <div class="loc-row">
+      <button type="button" class="btn loc-btn" id="btnLocHere">📍 Min plats</button>
+      <button type="button" class="btn loc-btn" id="btnLocPick">👆 Peka på kartan</button>
+    </div>
+    <p class="loc-readout" id="locReadout">Ingen plats vald ännu.</p>
+
+    <label class="field-label" for="fSpecies">Art</label>
+    <select id="fSpecies" class="field"></select>
+
+    <div class="row-2">
+      <div>
+        <label class="field-label" for="fDate">Datum</label>
+        <input type="date" id="fDate" class="field" />
+      </div>
+      <div>
+        <label class="field-label" for="fCount">Mängd</label>
+        <select id="fCount" class="field">
+          <option value="">–</option>
+          <option>Enstaka</option>
+          <option>Handfull</option>
+          <option>Korg</option>
+          <option>Jackpot</option>
+        </select>
+      </div>
+    </div>
+
+    <label class="field-label" for="fNotes">Anteckning</label>
+    <textarea id="fNotes" class="field" rows="2" placeholder="Under gran, mossig sluttning …"></textarea>
+
+    <div class="sheet-actions">
+      <button type="button" class="btn ghost" id="btnCancel">Avbryt</button>
+      <button type="submit" class="btn primary" id="btnSave" disabled>Spara fynd</button>
+    </div>
+  </form>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
