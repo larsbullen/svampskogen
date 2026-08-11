@@ -30,7 +30,7 @@ const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19, attribution: '© OpenStreetMap',
 });
 topo.addTo(map);
-L.control.layers({ 'Terräng': topo, 'Karta': osm }, null, { position: 'topright' }).addTo(map);
+const layersCtl = L.control.layers({ 'Terräng': topo, 'Karta': osm }, {}, { position: 'topright' }).addTo(map);
 
 /* ---------- Layers ---------- */
 const gbifLayer = L.layerGroup().addTo(map);
@@ -38,6 +38,62 @@ const mineLayer = L.layerGroup().addTo(map);
 
 function speciesColor(sv) {
   return (SPECIES[sv] && SPECIES[sv].color) || '#7A8A72';
+}
+
+/* ---------- Habitat suitability overlay (v0 terrain heuristic) ---------- */
+fetch('data/suitability.json')
+  .then(r => r.json())
+  .then(grid => {
+    const layer = buildSuitabilityOverlay(grid);
+    layer.addTo(map);
+    layersCtl.addOverlay(layer, 'Habitatmodell v0');
+    const leg = document.getElementById('suitLegend');
+    if (leg) leg.hidden = false;
+  })
+  .catch(() => {});
+
+// Green → gold → orange ramp; below 25 fully transparent to reduce clutter.
+function suitColor(score) {
+  const stops = [
+    [25,  80, 120,  70, 0.12],
+    [50, 150, 160,  60, 0.30],
+    [70, 225, 166,  62, 0.46],
+    [85, 224, 123,  57, 0.56],
+    [100, 200, 80,  40, 0.64],
+  ];
+  if (score < stops[0][0]) return [0, 0, 0, 0];
+  for (let k = 0; k < stops.length - 1; k++) {
+    const a = stops[k], b = stops[k + 1];
+    if (score <= b[0]) {
+      const t = (score - a[0]) / (b[0] - a[0]);
+      return [1, 2, 3, 4].map(m => a[m] + (b[m] - a[m]) * t);
+    }
+  }
+  const last = stops[stops.length - 1];
+  return [last[1], last[2], last[3], last[4]];
+}
+
+function buildSuitabilityOverlay(grid) {
+  const { nrows, ncols, north, south, west, east } = grid.meta;
+  const cv = document.createElement('canvas');
+  cv.width = ncols; cv.height = nrows;
+  const ctx = cv.getContext('2d');
+  const img = ctx.createImageData(ncols, nrows);
+  for (let i = 0; i < nrows; i++) {
+    for (let j = 0; j < ncols; j++) {
+      const s = grid.scores[i * ncols + j];
+      const p = (i * ncols + j) * 4;
+      if (s < 0) { img.data[p + 3] = 0; continue; }
+      const c = suitColor(s);
+      img.data[p] = Math.round(c[0]);
+      img.data[p + 1] = Math.round(c[1]);
+      img.data[p + 2] = Math.round(c[2]);
+      img.data[p + 3] = Math.round(c[3] * 255);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return L.imageOverlay(cv.toDataURL(), [[south, west], [north, east]],
+    { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' });
 }
 
 /* ---------- Historical (GBIF) finds ---------- */
