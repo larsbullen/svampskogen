@@ -28,19 +28,38 @@ counts as secure for development.
 - `manifest.webmanifest`, `sw.js`, `icons/` — PWA plumbing
 - `tools/build_suitability.py` — regenerates the suitability grid
 
-## Habitat overlay
+## Habitat overlay (v1 SDM)
 
 `data/suitability.json` is a coarse grid scoring each cell's mushroom-habitat
-potential. **v0 is a transparent terrain heuristic** (elevation band, slope,
-proximity to known finds) — a placeholder for the trained species-distribution
-model described in the project build spec. Regenerate with:
+potential, rendered as a heatmap overlay. **v1 is a presence-background logistic
+species-distribution model** (pure stdlib) trained on the known finds vs. a
+random background, over stacked open-data predictors:
+
+- **elevation + slope** — EU-DEM 25 m (`tools/dump_elevation.py` → `data/layers/elevation.json`)
+- **soil moisture (proxy)** — distance-to-flow-channel from Skogsstyrelsen
+  Flödesackumulation; the real SLU DTW raster is auth-gated
+  (`data/layers/soilmoisture.json`)
+- **forest species + mask** — Naturvårdsverket NMD 2018 land cover; non-forest
+  cells are masked out (`data/layers/forest.json`)
+
+Pipeline: build the three layers, then train:
 
 ```sh
-python3 tools/build_suitability.py
+python3 tools/dump_elevation.py      # elevation + slope
+# soil + forest layers are sampled from web services (see tools/ notes)
+python3 tools/build_model.py         # → data/suitability.json
 ```
+
+**Caveats:** few known finds (n≈9 unique cells in-grid) so the fit is
+experimental and AUC is optimistic; the soil layer is a proxy, not calibrated
+DTW; tree height/volume were unavailable (Skogsstyrelsen services now need
+Geodatasamverkan credentials). Next steps: widen the grid to capture all finds,
+add target-group background, add real DTW + stand height. `tools/build_suitability.py`
+keeps the older v0 terrain heuristic for reference.
 
 ## Data & licenses
 
 Known finds: GBIF / Artportalen (CC0). Elevation: EU-DEM via opentopodata.
-Basemap: OpenTopoMap (CC-BY-SA) / OpenStreetMap. The app maps *likelihood of
-habitat* — it never identifies species or judges edibility.
+Land cover: NMD, Naturvårdsverket (CC0). Wetness proxy: Skogsstyrelsen. Basemap:
+OpenTopoMap (CC-BY-SA) / OpenStreetMap. The app maps *likelihood of habitat* —
+it never identifies species or judges edibility.

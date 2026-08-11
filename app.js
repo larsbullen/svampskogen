@@ -46,7 +46,7 @@ fetch('data/suitability.json')
   .then(grid => {
     const layer = buildSuitabilityOverlay(grid);
     layer.addTo(map);
-    layersCtl.addOverlay(layer, 'Habitatmodell v0');
+    layersCtl.addOverlay(layer, 'Habitatmodell v1');
     const leg = document.getElementById('suitLegend');
     if (leg) leg.hidden = false;
   })
