@@ -41,6 +41,12 @@ const layersCtl = L.control.layers(
 const gbifLayer = L.layerGroup().addTo(map);
 const mineLayer = L.layerGroup().addTo(map);
 
+// Åre kommun outline.
+fetch('data/kommun.geojson').then(r => r.json()).then(k => {
+  L.geoJSON(k, { interactive: false, pane: 'overlayPane',
+    style: { color: '#2A4634', weight: 1.5, opacity: 0.5, fill: false, dashArray: '5 4' } }).addTo(map);
+}).catch(() => {});
+
 function speciesColor(sv) {
   return (SPECIES[sv] && SPECIES[sv].color) || '#7A8A72';
 }
@@ -68,6 +74,7 @@ Promise.all([
   suitOverlay = L.imageOverlay(renderSuit(grid, mult0), bounds,
     { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
   layersCtl.addOverlay(suitOverlay, 'Habitatmodell v1');
+  map.fitBounds(bounds, { padding: [8, 8] });   // frame the whole kommun
   const leg = document.getElementById('suitLegend'); if (leg) leg.hidden = false;
   if (forecastDays) initForecast();
 }).catch(() => {});
