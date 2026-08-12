@@ -194,8 +194,16 @@ fetch('data/occurrences.geojson')
     (fc.features || []).forEach(f => {
       const [lon, lat] = f.geometry.coordinates;
       const p = f.properties || {};
+      const color = speciesColor(p.sv);
+      // Search-area radius = the record's coordinate uncertainty (real metres).
+      if (p.uncertainty_m && p.uncertainty_m > 0) {
+        L.circle([lat, lon], {
+          radius: p.uncertainty_m, interactive: false,
+          color, weight: 1, opacity: 0.35, fillColor: color, fillOpacity: 0.08,
+        }).addTo(gbifLayer);
+      }
       L.circleMarker([lat, lon], {
-        radius: 6, weight: 1.5, color: '#ffffff', fillColor: speciesColor(p.sv),
+        radius: 6, weight: 1.5, color: '#ffffff', fillColor: color,
         fillOpacity: 0.9, opacity: 0.9,
       }).bindPopup(gbifPopup(p)).addTo(gbifLayer);
     });
@@ -205,7 +213,7 @@ fetch('data/occurrences.geojson')
   .catch(() => showToast('Kunde inte läsa kända fynd.'));
 
 function gbifPopup(p) {
-  const unc = p.uncertainty_m ? `±${p.uncertainty_m} m` : 'okänd noggrannhet';
+  const unc = p.uncertainty_m ? `sökområde ±${p.uncertainty_m} m` : 'okänd noggrannhet';
   const when = p.date ? String(p.date).slice(0, 10) : (p.year || '');
   const by = p.recordedBy ? `<div class="pop-meta">Rapporterat av ${escapeHtml(p.recordedBy)}</div>` : '';
   return `<div class="pop">
