@@ -2280,26 +2280,6 @@
     "recordedBy": "Stig Jacobsson",
     "gbifID": "850168659"
    }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.54533,
-     63.41576
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1975-08-27",
-    "year": 1975,
-    "uncertainty_m": 37235.0,
-    "recordedBy": "J.Ax. Nannfeldt",
-    "gbifID": "351738068"
-   }
   }
  ],
  "meta": {
@@ -2313,6 +2293,7 @@
   "region": "Åre kommun",
   "pulled": "2026-08-12",
   "total": 115,
-  "count": 115
+  "count": 114,
+  "filter": "dropped uncertainty>5000m"
  }
 }

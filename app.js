@@ -196,10 +196,14 @@ fetch('data/occurrences.geojson')
       const p = f.properties || {};
       const color = speciesColor(p.sv);
       // Search-area radius = the record's coordinate uncertainty (real metres).
+      // Fade the coarse ones (>1000 m) so a vague record doesn't dominate.
       if (p.uncertainty_m && p.uncertainty_m > 0) {
+        const big = p.uncertainty_m > 1000;
         L.circle([lat, lon], {
-          radius: p.uncertainty_m, interactive: false,
-          color, weight: 1, opacity: 0.35, fillColor: color, fillOpacity: 0.08,
+          radius: p.uncertainty_m, interactive: false, color,
+          weight: 1, opacity: big ? 0.15 : 0.35,
+          fillColor: color, fillOpacity: big ? 0.02 : 0.08,
+          dashArray: big ? '3 5' : null,
         }).addTo(gbifLayer);
       }
       L.circleMarker([lat, lon], {
