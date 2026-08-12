@@ -327,7 +327,7 @@ function updateReadout() {
   locReadout.classList.add('set');
 }
 
-fab.addEventListener('click', () => { resetPending(); openSheet(); });
+fab.addEventListener('click', () => { setMenu(false); resetPending(); openSheet(); });
 document.getElementById('btnCancel').addEventListener('click', closeSheet);
 backdrop.addEventListener('click', closeSheet);
 
@@ -347,17 +347,11 @@ document.getElementById('btnLocPick').addEventListener('click', (e) => {
 function enterPickMode(btn) {
   pickMode = true;
   sheet.hidden = true; backdrop.hidden = true;  // reveal map to tap
-  fab.classList.add('picking');
-  fab.firstElementChild.textContent = '👆';
-  fab.childNodes[fab.childNodes.length - 1].textContent = ' Peka på kartan…';
   showToast('Peka på platsen i kartan.');
   map._pickBtn = btn;
 }
 function exitPickMode() {
   pickMode = false;
-  fab.classList.remove('picking');
-  fab.firstElementChild.textContent = '＋';
-  fab.childNodes[fab.childNodes.length - 1].textContent = ' Rapportera fynd';
 }
 map.on('click', (e) => {
   if (!pickMode) return;
