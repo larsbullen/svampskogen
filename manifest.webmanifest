@@ -1,7 +1,7 @@
 {
-  "name": "Svampfinder — Åre",
-  "short_name": "Svampfinder",
-  "description": "Karta över potentiella svampställen kring Åre, och dina egna fynd.",
+  "name": "Svampskogen",
+  "short_name": "Svampskogen",
+  "description": "Karta över potentiella svampställen och dina egna fynd.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
