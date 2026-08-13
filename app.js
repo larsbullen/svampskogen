@@ -165,6 +165,7 @@ function scheduleRender(mult) {
   if (rafId) return;
   rafId = requestAnimationFrame(() => { rafId = null; suitOverlay.setUrl(renderSuit(suitGrid, pendingMult)); });
 }
+function curMult() { return forecastDays ? forecastDays[fcIndex].fruiting : 1; }
 
 function initForecast() {
   document.getElementById('forecast').hidden = false;
