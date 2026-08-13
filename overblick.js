@@ -27,9 +27,9 @@ document.getElementById('gateForm').addEventListener('submit', async (e) => {
   if (ok) { sessionStorage.setItem('overblick.ok', '1'); unlock(); }
   else { document.getElementById('pwErr').hidden = false; document.getElementById('pw').value = ''; }
 });
+let map;
 if (sessionStorage.getItem('overblick.ok') === '1') unlock();
 
-let map;
 function unlock() {
   gate.style.display = 'none';
   document.getElementById('app').hidden = false;
