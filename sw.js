@@ -1,5 +1,5 @@
 /* Svampfinder service worker — offline app shell + tile caching */
-const SHELL = 'svampfinder-shell-v31';
+const SHELL = 'svampfinder-shell-v32';
 const TILES = 'svampfinder-tiles-v1';
 
 const CORE = [
@@ -52,17 +52,20 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Same-origin: stale-while-revalidate so app updates propagate on next load,
-  // while staying fully offline-capable.
+  // Same-origin: network-FIRST so app + data updates show on the first reload
+  // (a stale-while-revalidate cache needed two reloads and hid updates). Falls
+  // back to cache when offline, so the app stays fully offline-capable.
   if (url.origin === self.location.origin) {
     e.respondWith(
       caches.open(SHELL).then(async cache => {
-        const hit = await cache.match(req);
-        const net = fetch(req).then(res => {
+        try {
+          const res = await fetch(req);
           if (res && res.ok) cache.put(req, res.clone());
           return res;
-        }).catch(() => hit || (req.mode === 'navigate' ? cache.match('./index.html') : undefined));
-        return hit || net;
+        } catch {
+          const hit = await cache.match(req);
+          return hit || (req.mode === 'navigate' ? cache.match('./index.html') : undefined);
+        }
       })
     );
   }
