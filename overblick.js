@@ -19,17 +19,24 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 // ---- Supabase Auth (real security: reading finds requires a logged-in account) ----
-async function login(email, password) {
-  const res = await fetch(AUTH_URL + '/token?grant_type=password', {
-    method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) return false;
-  const d = await res.json();
-  accessToken = d.access_token;
-  localStorage.setItem('overblick.token', accessToken);
-  if (d.refresh_token) localStorage.setItem('overblick.refresh', d.refresh_token);
-  return true;
+async function login(email, password) {   // returns null on success, else an error message
+  let res;
+  try {
+    res = await fetch(AUTH_URL + '/token?grant_type=password', {
+      method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch { return 'Nätverksfel — försök igen.'; }
+  if (res.ok) {
+    const d = await res.json();
+    accessToken = d.access_token;
+    localStorage.setItem('overblick.token', accessToken);
+    if (d.refresh_token) localStorage.setItem('overblick.refresh', d.refresh_token);
+    return null;
+  }
+  let e = {}; try { e = await res.json(); } catch {}
+  if (e.error_code === 'email_not_confirmed') return 'Kontot är inte bekräftat — bekräfta det i Supabase.';
+  return e.msg || 'Fel e-post eller lösenord.';
 }
 async function refreshSession() {
   const rt = localStorage.getItem('overblick.refresh');
@@ -50,10 +57,11 @@ const gate = document.getElementById('gate');
 document.getElementById('gateForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('pwBtn'); btn.disabled = true;
-  const ok = await login(document.getElementById('email').value.trim(), document.getElementById('pw').value);
+  const err = await login(document.getElementById('email').value.trim(), document.getElementById('pw').value);
   btn.disabled = false;
-  if (ok) unlock();
-  else { document.getElementById('pwErr').hidden = false; document.getElementById('pw').value = ''; }
+  if (!err) { unlock(); return; }
+  const p = document.getElementById('pwErr'); p.textContent = err; p.hidden = false;
+  document.getElementById('pw').value = '';
 });
 
 let map, suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
