@@ -6,8 +6,9 @@
 
 const SB_URL = 'https://frivhxpuntqwzrkxdmrp.supabase.co/rest/v1';
 const SB_KEY = 'sb_publishable_Fjd4npCW40Bz8-nAhhYkYQ_NH6THI_9';
-const SB_HEAD = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
-const PW_HASH = 'b5683d660cbac6aff6af03b6b23b7b4efc13adf8f7921560ddd8715c088e81ee';   // sha-256 of the password
+const AUTH_URL = 'https://frivhxpuntqwzrkxdmrp.supabase.co/auth/v1';
+let accessToken = null;
+const authHead = () => ({ apikey: SB_KEY, Authorization: 'Bearer ' + accessToken });
 
 const SPECIES = {
   'Kantarell': '#E0A100', 'Karljohan': '#8A5A2B', 'Trattkantarell': '#E07B39',
@@ -17,22 +18,47 @@ const speciesColor = sv => SPECIES[sv] || '#7A8A72';
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-async function sha256hex(s) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+// ---- Supabase Auth (real security: reading finds requires a logged-in account) ----
+async function login(email, password) {
+  const res = await fetch(AUTH_URL + '/token?grant_type=password', {
+    method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) return false;
+  const d = await res.json();
+  accessToken = d.access_token;
+  localStorage.setItem('overblick.token', accessToken);
+  if (d.refresh_token) localStorage.setItem('overblick.refresh', d.refresh_token);
+  return true;
+}
+async function refreshSession() {
+  const rt = localStorage.getItem('overblick.refresh');
+  if (!rt) return false;
+  const res = await fetch(AUTH_URL + '/token?grant_type=refresh_token', {
+    method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: rt }),
+  });
+  if (!res.ok) return false;
+  const d = await res.json();
+  accessToken = d.access_token;
+  localStorage.setItem('overblick.token', accessToken);
+  if (d.refresh_token) localStorage.setItem('overblick.refresh', d.refresh_token);
+  return true;
 }
 
 const gate = document.getElementById('gate');
 document.getElementById('gateForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const ok = (await sha256hex(document.getElementById('pw').value)) === PW_HASH;
-  if (ok) { sessionStorage.setItem('overblick.ok', '1'); unlock(); }
+  const btn = document.getElementById('pwBtn'); btn.disabled = true;
+  const ok = await login(document.getElementById('email').value.trim(), document.getElementById('pw').value);
+  btn.disabled = false;
+  if (ok) unlock();
   else { document.getElementById('pwErr').hidden = false; document.getElementById('pw').value = ''; }
 });
 
 let map, suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
 let strictMode = true;   // show only the best spots (default ON)
-if (sessionStorage.getItem('overblick.ok') === '1') unlock();
+refreshSession().then(ok => { if (ok) unlock(); });   // resume a saved session
 
 function unlock() {
   gate.style.display = 'none';
@@ -131,8 +157,13 @@ async function loadFinds() {
   }).catch(() => {});
   // All reported finds (every device) as stars.
   let rows = [];
-  try { rows = await fetch(SB_URL + '/finds?select=*&order=created.desc', { headers: SB_HEAD }).then(r => r.json()); }
-  catch { document.getElementById('stat').textContent = 'Kunde inte hämta fynd.'; return; }
+  try {
+    const q = '/finds?select=*&order=created.desc';
+    let res = await fetch(SB_URL + q, { headers: authHead() });
+    if (res.status === 401 && await refreshSession()) res = await fetch(SB_URL + q, { headers: authHead() });
+    if (!res.ok) throw 0;
+    rows = await res.json();
+  } catch { document.getElementById('stat').textContent = 'Kunde inte hämta fynd — logga in igen.'; return; }
   rows = rows.filter(r => r.device_id !== 'setup-test' && r.lat && r.lon);
   const devices = new Set(), bySpecies = {};
   rows.forEach(r => {
