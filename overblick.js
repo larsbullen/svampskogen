@@ -31,6 +31,7 @@ document.getElementById('gateForm').addEventListener('submit', async (e) => {
 });
 
 let map, suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
+let strictMode = false;   // show only the best spots
 if (sessionStorage.getItem('overblick.ok') === '1') unlock();
 
 function unlock() {
@@ -54,13 +55,17 @@ function suitColor(score) {
 }
 function renderSuit(grid, mult) {
   const { nrows, ncols } = grid.meta, n = nrows * ncols;
+  const cut = strictMode ? 55 : 25;
   const cv = document.createElement('canvas'); cv.width = ncols; cv.height = nrows;
   const ctx = cv.getContext('2d'), img = ctx.createImageData(ncols, nrows);
   for (let idx = 0; idx < n; idx++) {
     const s = grid.scores[idx], p = idx * 4;
     if (s < 0) { img.data[p + 3] = 0; continue; }
-    const c = suitColor(s * mult);
-    img.data[p] = Math.round(c[0]); img.data[p + 1] = Math.round(c[1]); img.data[p + 2] = Math.round(c[2]); img.data[p + 3] = Math.round(c[3] * 255);
+    const eff = s * mult;
+    if (eff < cut) { img.data[p + 3] = 0; continue; }
+    const c = suitColor(eff);
+    const a = strictMode ? Math.min(0.8, c[3] * 1.5) : c[3];
+    img.data[p] = Math.round(c[0]); img.data[p + 1] = Math.round(c[1]); img.data[p + 2] = Math.round(c[2]); img.data[p + 3] = Math.round(a * 255);
   }
   ctx.putImageData(img, 0, 0); return cv.toDataURL();
 }
@@ -101,6 +106,9 @@ function initForecast() {
   document.getElementById('fcEnd').textContent = fmtDate(forecastDays[forecastDays.length - 1].date);
   slider.addEventListener('input', () => setDay(+slider.value));
   document.getElementById('fcNow').addEventListener('click', () => { const i = nearestDay(todayISO()); slider.value = i; setDay(i); });
+  const strictCb = document.getElementById('fcStrict');
+  strictCb.checked = strictMode;
+  strictCb.addEventListener('change', () => { strictMode = strictCb.checked; scheduleRender(curMult()); });
   setDay(fcIndex);
 }
 function setDay(i) {

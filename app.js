@@ -56,6 +56,7 @@ function speciesColor(sv) {
 // grid; fruiting is a daily 0..1 index (SMHI rain+temp). The date picker scales
 // every cell's score by fruiting(date) so dry/cold days dim the whole map.
 let suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
+let strictMode = localStorage.getItem('svampfinder.strict') === '1';   // show only the best spots
 
 Promise.all([
   fetch('data/suitability.json').then(r => r.json()),
@@ -104,6 +105,7 @@ function suitColor(score) {
 function renderSuit(grid, mult) {
   const { nrows, ncols } = grid.meta;
   const n = nrows * ncols;
+  const cut = strictMode ? 55 : 25;    // strict: only the best spots light up, punchier
   const cv = document.createElement('canvas');
   cv.width = ncols; cv.height = nrows;
   const ctx = cv.getContext('2d');
@@ -112,11 +114,14 @@ function renderSuit(grid, mult) {
     const s = grid.scores[idx];
     const p = idx * 4;
     if (s < 0) { img.data[p + 3] = 0; continue; }
-    const c = suitColor(s * mult);
+    const eff = s * mult;
+    if (eff < cut) { img.data[p + 3] = 0; continue; }
+    const c = suitColor(eff);
+    const a = strictMode ? Math.min(0.8, c[3] * 1.5) : c[3];
     img.data[p] = Math.round(c[0]);
     img.data[p + 1] = Math.round(c[1]);
     img.data[p + 2] = Math.round(c[2]);
-    img.data[p + 3] = Math.round(c[3] * 255);
+    img.data[p + 3] = Math.round(a * 255);
   }
   ctx.putImageData(img, 0, 0);
   return cv.toDataURL();
@@ -172,6 +177,13 @@ function initForecast() {
   document.getElementById('fcNow').addEventListener('click', () => {
     const i = nearestDay(todayISO());
     slider.value = i; setDay(i);
+  });
+  const strictCb = document.getElementById('fcStrict');
+  strictCb.checked = strictMode;
+  strictCb.addEventListener('change', () => {
+    strictMode = strictCb.checked;
+    localStorage.setItem('svampfinder.strict', strictMode ? '1' : '0');
+    scheduleRender(curMult());
   });
   setDay(fcIndex);
 }

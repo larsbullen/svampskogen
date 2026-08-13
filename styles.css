@@ -235,6 +235,8 @@ textarea.field { resize: vertical; }
   box-shadow: var(--shadow-l);
   padding: .6rem .9rem calc(.7rem + var(--safe-b));
 }
+.fc-strict { display: flex; align-items: center; gap: .5rem; font-size: .82rem; color: var(--ink-2); margin: 0 0 .5rem; cursor: pointer; user-select: none; }
+.fc-strict input { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); cursor: pointer; flex: none; }
 .fc-row { display: flex; align-items: center; gap: .55rem; margin-bottom: .35rem; }
 .fc-chip { font-size: .8rem; font-weight: 650; padding: .22rem .7rem; border-radius: 999px; white-space: nowrap; }
 .fc-chip.lvl0 { background: var(--surface-2); color: var(--muted); }

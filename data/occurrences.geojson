@@ -546,26 +546,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     12.32864,
-     63.57715
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "2020-11-08",
-    "year": 2020,
-    "uncertainty_m": 2518.0,
-    "recordedBy": "Ingela Källén, Johan Råghall",
-    "gbifID": "2980027752"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      14.06597,
      63.84703
     ]
@@ -819,46 +799,6 @@
     "uncertainty_m": 500.0,
     "recordedBy": "Anders Forsgren",
     "gbifID": "1432568703"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.04281,
-     63.84194
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "2014-08-27",
-    "year": 2014,
-    "uncertainty_m": 1934.0,
-    "recordedBy": "Marcus Vestlund",
-    "gbifID": "1036525233"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.04281,
-     63.84194
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "2014-08-27",
-    "year": 2014,
-    "uncertainty_m": 1934.0,
-    "recordedBy": "Marcus Vestlund",
-    "gbifID": "1036525931"
    }
   },
   {
@@ -1506,66 +1446,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     12.85528,
-     63.78571
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1997-08-19",
-    "year": 1997,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850429469"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.85528,
-     63.78571
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1997-08-19",
-    "year": 1997,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850433268"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     13.11615,
-     63.58255
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1997-08-20",
-    "year": 1997,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850437068"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      12.87249,
      63.66985
     ]
@@ -1599,26 +1479,6 @@
     "uncertainty_m": 100.0,
     "recordedBy": "Hans-Göran Toresson, Anders Bringskog",
     "gbifID": "850169122"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.85721,
-     63.78665
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1996-08-14",
-    "year": 1996,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850440478"
    }
   },
   {
@@ -1726,66 +1586,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     14.34316,
-     63.61824
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1993-08-24",
-    "year": 1993,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Irene Andersson",
-    "gbifID": "850429880"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.11491,
-     64.06439
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1993-08-23",
-    "year": 1993,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Irene Andersson",
-    "gbifID": "850431263"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.05901,
-     63.31894
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1993-08-11",
-    "year": 1993,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Stig Jacobsson",
-    "gbifID": "850434501"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      12.33232,
      63.28505
     ]
@@ -1799,146 +1599,6 @@
     "uncertainty_m": 100.0,
     "recordedBy": "Lars Lundberg",
     "gbifID": "850162643"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     13.77694,
-     63.07289
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1992-08-02",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850416186"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.16902,
-     63.26525
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1992-08-25",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850420541"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.33129,
-     63.28368
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1992-08-15",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850430160"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.49449,
-     63.29565
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1992-08-18",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850432493"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     13.05987,
-     63.33012
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1992-08-22",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850437720"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.40546,
-     63.28906
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1992-08-15",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850440426"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     12.31968,
-     63.2807
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1992-08-31",
-    "year": 1992,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Lars Lundberg",
-    "gbifID": "850441412"
    }
   },
   {
@@ -1999,46 +1659,6 @@
     "uncertainty_m": 100.0,
     "recordedBy": "Stig Jacobsson",
     "gbifID": "850152130"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.31274,
-     63.04365
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1990-08-12",
-    "year": 1990,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Stig Jacobsson",
-    "gbifID": "850421262"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.31274,
-     63.04365
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1990-08-12",
-    "year": 1990,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Stig Jacobsson",
-    "gbifID": "850426084"
    }
   },
   {
@@ -2146,66 +1766,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     13.05987,
-     63.33012
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Kantarell",
-    "sci": "Cantharellus cibarius",
-    "date": "1984-08-12",
-    "year": 1984,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Via Michael Krikorev",
-    "gbifID": "850433476"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     13.05129,
-     63.41973
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1984-08-15",
-    "year": 1984,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Gunnel Avehag",
-    "gbifID": "850434496"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     13.05129,
-     63.41973
-    ]
-   },
-   "properties": {
-    "source": "gbif",
-    "sv": "Karljohan",
-    "sci": "Boletus edulis",
-    "date": "1984-08-15",
-    "year": 1984,
-    "uncertainty_m": 5000.0,
-    "recordedBy": "Gunnel Avehag",
-    "gbifID": "850436636"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      13.08985,
      63.40188
     ]
@@ -2293,7 +1853,7 @@
   "region": "Åre kommun",
   "pulled": "2026-08-12",
   "total": 115,
-  "count": 114,
-  "filter": "dropped uncertainty>5000m"
+  "count": 92,
+  "filter": "dropped uncertainty>1000m"
  }
 }
