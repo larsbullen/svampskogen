@@ -462,25 +462,35 @@ sheet.addEventListener('submit', (ev) => {
 });
 
 /* ---------- Live GPS location ---------- */
-let gpsMarker = null, gpsLatLng = null;
-function startGps() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.watchPosition(pos => {
-    gpsLatLng = [pos.coords.latitude, pos.coords.longitude];
-    if (!gpsMarker) gpsMarker = L.circleMarker(gpsLatLng, { radius: 7, color: '#fff', weight: 2, fillColor: '#2b7fff', fillOpacity: 1, pane: 'markerPane' }).addTo(map);
-    else gpsMarker.setLatLng(gpsLatLng);
-  }, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+let gpsMarker = null, gpsLatLng = null, gpsWatching = false;
+function showGps(pos) {
+  gpsLatLng = [pos.coords.latitude, pos.coords.longitude];
+  if (!gpsMarker) gpsMarker = L.circleMarker(gpsLatLng, { radius: 7, color: '#fff', weight: 2, fillColor: '#2b7fff', fillOpacity: 1, pane: 'markerPane' }).addTo(map);
+  else gpsMarker.setLatLng(gpsLatLng);
 }
-// The locate button re-centres on the live dot (or fetches a one-off fix).
+function gpsErr(e) {
+  if (e && e.code === 1) return 'Platsåtkomst nekad — slå på plats för Safari i Inställningar.';
+  if (e && e.code === 3) return 'Tog för lång tid att hitta din plats — testa igen.';
+  return 'Kunde inte hitta din plats.';
+}
+function startWatch() {   // start following the live position once we have a first fix
+  if (gpsWatching || !navigator.geolocation) return;
+  gpsWatching = true;
+  navigator.geolocation.watchPosition(showGps, () => {}, { enableHighAccuracy: true, maximumAge: 30000, timeout: 25000 });
+}
+// Locate button: gesture-triggered (iOS-friendly), high-accuracy then low-accuracy fallback.
 document.getElementById('btnLocate').addEventListener('click', (e) => {
   const b = e.currentTarget;
   if (gpsLatLng) { map.setView(gpsLatLng, 14); return; }
+  if (!navigator.geolocation) { showToast('Plats stöds inte i den här webbläsaren.'); return; }
   b.classList.add('active');
-  navigator.geolocation.getCurrentPosition(
-    pos => { b.classList.remove('active'); gpsLatLng = [pos.coords.latitude, pos.coords.longitude]; map.setView(gpsLatLng, 14); startGps(); },
-    () => { b.classList.remove('active'); showToast('Kunde inte hämta din plats.'); },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
+  const opts = h => ({ enableHighAccuracy: h, timeout: h ? 12000 : 20000, maximumAge: 60000 });
+  const ok = pos => { b.classList.remove('active'); showGps(pos); map.setView(gpsLatLng, 14); startWatch(); };
+  navigator.geolocation.getCurrentPosition(ok, err1 => {
+    if (err1 && err1.code === 3) {   // high-accuracy timed out → retry with faster low-accuracy
+      navigator.geolocation.getCurrentPosition(ok, err2 => { b.classList.remove('active'); showToast(gpsErr(err2)); }, opts(false));
+    } else { b.classList.remove('active'); showToast(gpsErr(err1)); }
+  }, opts(true));
 });
 
 /* ---------- Export ---------- */
@@ -524,7 +534,6 @@ function showToast(msg) {
 /* ---------- Init ---------- */
 renderMine();
 retryUnsynced();
-startGps();
 
 /* ---------- Service worker ---------- */
 if ('serviceWorker' in navigator) {

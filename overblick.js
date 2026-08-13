@@ -158,5 +158,5 @@ function startGps() {
     const ll = [pos.coords.latitude, pos.coords.longitude];
     if (!gpsMarker) gpsMarker = L.circleMarker(ll, { radius: 7, color: '#fff', weight: 2, fillColor: '#2b7fff', fillOpacity: 1, pane: 'markerPane' }).addTo(map);
     else gpsMarker.setLatLng(ll);
-  }, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+  }, () => {}, { enableHighAccuracy: false, maximumAge: 60000, timeout: 20000 });
 }
