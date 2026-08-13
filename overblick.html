@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Överblick — Svampfinder</title>
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <meta name="robots" content="noai, noimageai" />
+  <meta name="theme-color" content="#33553F" />
+  <link rel="stylesheet" href="vendor/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .gate { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: var(--ground); padding: 1rem; }
+    .gate-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-l); padding: 1.6rem 1.5rem; width: min(21rem, 100%); text-align: center; }
+    .gate-card h1 { font-family: var(--serif); font-weight: 600; font-size: 1.5rem; margin: 0 0 .2rem; }
+    .gate-card p { color: var(--muted); font-size: .85rem; margin: 0 0 1.1rem; }
+    .gate-card input { width: 100%; font-size: 1rem; padding: .65rem .8rem; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); margin-bottom: .7rem; }
+    .gate-card input:focus-visible { outline: 2px solid var(--accent); }
+    .gate-card button { width: 100%; padding: .7rem; border: none; border-radius: 10px; background: var(--forest); color: #fff; font-weight: 650; font-size: .95rem; cursor: pointer; }
+    :root[data-theme="dark"] .gate-card button, @media (prefers-color-scheme: dark) { .gate-card button { color: #12140E; } }
+    .gate-err { color: var(--danger) !important; margin: .6rem 0 0 !important; }
+    .ov-stat { position: fixed; top: max(.75rem, env(safe-area-inset-top)); left: .75rem; z-index: 500; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-l); padding: .7rem .9rem; max-width: min(20rem, calc(100vw - 1.5rem)); font-size: .85rem; color: var(--ink-2); }
+    .ov-stat h2 { font-family: var(--serif); font-weight: 600; font-size: 1rem; color: var(--ink); margin: 0 0 .3rem; }
+    .ov-stat b { color: var(--ink); }
+  </style>
+</head>
+<body>
+  <div id="app" hidden>
+    <div id="map" aria-label="Karta"></div>
+    <div class="ov-stat"><h2>Överblick · alla fynd</h2><div id="stat">Laddar …</div></div>
+  </div>
+
+  <div class="gate" id="gate">
+    <form class="gate-card" id="gateForm">
+      <h1>🔒 Överblick</h1>
+      <p>Alla rapporterade fynd — lösenordsskyddat</p>
+      <input type="password" id="pw" placeholder="Lösenord" autocomplete="current-password" autofocus />
+      <button type="submit" id="pwBtn">Lås upp</button>
+      <p class="gate-err" id="pwErr" hidden>Fel lösenord</p>
+    </form>
+  </div>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="overblick.js"></script>
+</body>
+</html>
