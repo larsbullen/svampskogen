@@ -65,6 +65,9 @@ document.getElementById('gateForm').addEventListener('submit', async (e) => {
 });
 
 let map, suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
+// Per-region fruiting series (Åre west, Krokom east); cellRegion[idx] = nearest
+// region for that grid cell (built once). See app.js for the shared approach.
+let fcRegions = null, cellRegion = null;
 let strictMode = true;   // show only the best spots (default ON)
 refreshSession().then(ok => { if (ok) unlock(); });   // resume a saved session
 
@@ -87,7 +90,29 @@ function suitColor(score) {
   for (let k = 0; k < stops.length - 1; k++) { const a = stops[k], b = stops[k + 1]; if (score <= b[0]) { const t = (score - a[0]) / (b[0] - a[0]); return [1, 2, 3, 4].map(m => a[m] + (b[m] - a[m]) * t); } }
   const last = stops[stops.length - 1]; return [last[1], last[2], last[3], last[4]];
 }
-function renderSuit(grid, mult) {
+function cellLatLon(grid, idx) {
+  const { nrows, ncols, north, south, west, east } = grid.meta;
+  const row = Math.floor(idx / ncols), col = idx % ncols;
+  return [north - (row + 0.5) * (north - south) / nrows, west + (col + 0.5) * (east - west) / ncols];
+}
+function buildCellRegion(grid, regions) {
+  const { nrows, ncols } = grid.meta, n = nrows * ncols;
+  const out = new Uint8Array(n);
+  if (!regions.some(r => r.anchor)) return out;
+  for (let idx = 0; idx < n; idx++) {
+    const [lat, lon] = cellLatLon(grid, idx);
+    let best = 0, bestD = Infinity;
+    regions.forEach((r, ri) => { if (!r.anchor) return; const dLat = lat - r.anchor[0], dLon = (lon - r.anchor[1]) * Math.cos(lat * Math.PI / 180); const d = dLat * dLat + dLon * dLon; if (d < bestD) { bestD = d; best = ri; } });
+    out[idx] = best;
+  }
+  return out;
+}
+function fruitAt(idx, i) {
+  if (fcRegions && cellRegion) return fcRegions[cellRegion[idx]].days[i].fruiting;
+  if (forecastDays) return forecastDays[i].fruiting;
+  return 1;
+}
+function renderSuit(grid, i) {
   const { nrows, ncols } = grid.meta, n = nrows * ncols;
   const cut = strictMode ? 55 : 25;
   const cv = document.createElement('canvas'); cv.width = ncols; cv.height = nrows;
@@ -95,7 +120,7 @@ function renderSuit(grid, mult) {
   for (let idx = 0; idx < n; idx++) {
     const s = grid.scores[idx], p = idx * 4;
     if (s < 0) { img.data[p + 3] = 0; continue; }
-    const eff = s * mult;
+    const eff = s * fruitAt(idx, i);
     if (eff < cut) { img.data[p + 3] = 0; continue; }
     const c = suitColor(eff);
     const a = strictMode ? Math.min(0.8, c[3] * 1.5) : c[3];
@@ -112,21 +137,34 @@ function buildTrackGradient() {
   const st = []; forecastDays.forEach((d, i) => { const c = fcStepColor(d.fruiting); const a = Math.max(0, (i - 0.5) / (n - 1)) * 100, b = Math.min(1, (i + 0.5) / (n - 1)) * 100; st.push(`${c} ${a.toFixed(2)}%`, `${c} ${b.toFixed(2)}%`); });
   return `linear-gradient(90deg, ${st.join(', ')})`;
 }
-let rafId = null, pendingMult = null;
-function scheduleRender(mult) { pendingMult = mult; if (rafId) return; rafId = requestAnimationFrame(() => { rafId = null; suitOverlay.setUrl(renderSuit(suitGrid, pendingMult)); }); }
-function curMult() { return forecastDays ? forecastDays[fcIndex].fruiting : 1; }
+let rafId = null, pendingIdx = 0;
+function scheduleRender(i) { pendingIdx = i; if (rafId) return; rafId = requestAnimationFrame(() => { rafId = null; suitOverlay.setUrl(renderSuit(suitGrid, pendingIdx)); }); }
 
 async function loadOverlay() {
   try {
     const [grid, fc, kom] = await Promise.all([
       fetch('data/suitability.json').then(r => r.json()),
       fetch('data/forecast.json').then(r => r.json()).catch(() => null),
-      fetch('data/kommun.geojson').then(r => r.json()).catch(() => null),
+      fetch('data/kommuner.geojson').then(r => r.json()).catch(() => null),
     ]);
     suitGrid = grid; const m = grid.meta; const bounds = [[m.south, m.west], [m.north, m.east]];
     if (kom) L.geoJSON(kom, { interactive: false, pane: 'overlayPane', style: { color: '#2A4634', weight: 1.5, opacity: 0.5, fill: false, dashArray: '5 4' } }).addTo(map);
-    if (fc && fc.days && fc.days.length) { forecastDays = fc.days; const ti = nearestDay(todayISO()); forecastDays = forecastDays.slice(Math.max(0, ti - 14)); fcIndex = nearestDay(todayISO()); }
-    suitOverlay = L.imageOverlay(renderSuit(grid, curMult()), bounds, { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
+    if (fc && fc.days && fc.days.length) {
+      // Multi-region: each cell uses its nearest region anchor (Åre west,
+      // Krokom east); fall back to the flat days[] as one anchorless region.
+      const defName = (fc.meta && fc.meta.default_region) || 'are';
+      const regs = fc.regions
+        ? Object.keys(fc.regions).map(k => ({ anchor: fc.regions[k].anchor, days: fc.regions[k].days }))
+        : [{ anchor: null, days: fc.days }];
+      forecastDays = (fc.regions && fc.regions[defName]) ? fc.regions[defName].days : fc.days;
+      const ti = nearestDay(todayISO());
+      const from = Math.max(0, ti - 14);
+      forecastDays = forecastDays.slice(from);
+      fcRegions = regs.map(r => ({ anchor: r.anchor, days: r.days.slice(from) }));
+      cellRegion = buildCellRegion(grid, fcRegions);
+      fcIndex = nearestDay(todayISO());
+    }
+    suitOverlay = L.imageOverlay(renderSuit(grid, fcIndex), bounds, { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
     map.fitBounds(bounds, { padding: [8, 8] });
     if (forecastDays) initForecast();
   } catch { /* overlay optional */ }
@@ -142,12 +180,12 @@ function initForecast() {
   document.getElementById('fcNow').addEventListener('click', () => { const i = nearestDay(todayISO()); slider.value = i; setDay(i); });
   const strictCb = document.getElementById('fcStrict');
   strictCb.checked = strictMode;
-  strictCb.addEventListener('change', () => { strictMode = strictCb.checked; scheduleRender(curMult()); });
+  strictCb.addEventListener('change', () => { strictMode = strictCb.checked; scheduleRender(fcIndex); });
   setDay(fcIndex);
 }
 function setDay(i) {
   fcIndex = i; const d = forecastDays[i];
-  if (suitOverlay) scheduleRender(d.fruiting);
+  if (suitOverlay) scheduleRender(i);
   const chip = document.getElementById('fcChip');
   chip.textContent = d.verdict + (d.reason ? ' · ' + d.reason : '');
   chip.className = 'fc-chip lvl' + fruitingLevel(d.fruiting);

@@ -41,8 +41,8 @@ const layersCtl = L.control.layers(
 const gbifLayer = L.layerGroup().addTo(map);
 const mineLayer = L.layerGroup().addTo(map);
 
-// Åre kommun outline.
-fetch('data/kommun.geojson').then(r => r.json()).then(k => {
+// Kommun outlines (Åre + Krokom).
+fetch('data/kommuner.geojson').then(r => r.json()).then(k => {
   L.geoJSON(k, { interactive: false, pane: 'overlayPane',
     style: { color: '#2A4634', weight: 1.5, opacity: 0.5, fill: false, dashArray: '5 4' } }).addTo(map);
 }).catch(() => {});
@@ -56,6 +56,9 @@ function speciesColor(sv) {
 // grid; fruiting is a daily 0..1 index (SMHI rain+temp). The date picker scales
 // every cell's score by fruiting(date) so dry/cold days dim the whole map.
 let suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
+// Per-region fruiting series (Åre west, Krokom east). fcRegions = [{anchor,days}],
+// cellRegion[idx] = index of the nearest region for that grid cell (built once).
+let fcRegions = null, cellRegion = null;
 let strictMode = localStorage.getItem('svampfinder.strict') !== '0';   // show only the best spots (default ON)
 
 Promise.all([
@@ -66,13 +69,24 @@ Promise.all([
   const m = grid.meta;
   const bounds = [[m.south, m.west], [m.north, m.east]];
   if (fc && fc.days && fc.days.length) {
-    forecastDays = fc.days;
+    // Multi-region forecast: each map cell uses its nearest region anchor
+    // (Åre in the west, Krokom in the east). Fall back to the flat days[] as a
+    // single anchorless region if this is an older forecast.json.
+    const defName = (fc.meta && fc.meta.default_region) || 'are';
+    const regs = fc.regions
+      ? Object.keys(fc.regions).map(k => ({ anchor: fc.regions[k].anchor, days: fc.regions[k].days }))
+      : [{ anchor: null, days: fc.days }];
+    // forecastDays drives the slider/gradient/chip and stays the default region.
+    forecastDays = (fc.regions && fc.regions[defName]) ? fc.regions[defName].days : fc.days;
     // Window to ~2 weeks back + the 10-day outlook — drop the dead off-season.
     const ti = nearestDay(todayISO());
-    forecastDays = forecastDays.slice(Math.max(0, ti - 14));
+    const from = Math.max(0, ti - 14);
+    forecastDays = forecastDays.slice(from);
+    fcRegions = regs.map(r => ({ anchor: r.anchor, days: r.days.slice(from) }));
+    cellRegion = buildCellRegion(grid, fcRegions);
+    fcIndex = nearestDay(todayISO());
   }
-  const mult0 = forecastDays ? (forecastDays[fcIndex = nearestDay(todayISO())].fruiting) : 1;
-  suitOverlay = L.imageOverlay(renderSuit(grid, mult0), bounds,
+  suitOverlay = L.imageOverlay(renderSuit(grid, fcIndex), bounds,
     { opacity: 1, interactive: false, className: 'suit-overlay', pane: 'overlayPane' }).addTo(map);
   layersCtl.addOverlay(suitOverlay, 'Habitatmodell v1');
   map.fitBounds(bounds, { padding: [8, 8] });   // frame the whole kommun
@@ -101,8 +115,41 @@ function suitColor(score) {
   return [last[1], last[2], last[3], last[4]];
 }
 
-// Render the grid to a data-URL, scaling every score by the fruiting multiplier.
-function renderSuit(grid, mult) {
+// Geographic centre of grid cell idx (row-major from the NW corner).
+function cellLatLon(grid, idx) {
+  const { nrows, ncols, north, south, west, east } = grid.meta;
+  const row = Math.floor(idx / ncols), col = idx % ncols;
+  return [north - (row + 0.5) * (north - south) / nrows,
+          west + (col + 0.5) * (east - west) / ncols];
+}
+// Map every grid cell to its nearest region anchor (built once). Anchorless
+// (legacy flat) forecasts map everything to region 0.
+function buildCellRegion(grid, regions) {
+  const { nrows, ncols } = grid.meta, n = nrows * ncols;
+  const out = new Uint8Array(n);
+  if (!regions.some(r => r.anchor)) return out;
+  for (let idx = 0; idx < n; idx++) {
+    const [lat, lon] = cellLatLon(grid, idx);
+    let best = 0, bestD = Infinity;
+    regions.forEach((r, ri) => {
+      if (!r.anchor) return;
+      const dLat = lat - r.anchor[0], dLon = (lon - r.anchor[1]) * Math.cos(lat * Math.PI / 180);
+      const d = dLat * dLat + dLon * dLon;
+      if (d < bestD) { bestD = d; best = ri; }
+    });
+    out[idx] = best;
+  }
+  return out;
+}
+// Fruiting multiplier for grid cell idx on forecast day i (nearest region).
+function fruitAt(idx, i) {
+  if (fcRegions && cellRegion) return fcRegions[cellRegion[idx]].days[i].fruiting;
+  if (forecastDays) return forecastDays[i].fruiting;
+  return 1;
+}
+
+// Render the grid to a data-URL, scaling each cell by its region's fruiting(day i).
+function renderSuit(grid, i) {
   const { nrows, ncols } = grid.meta;
   const n = nrows * ncols;
   const cut = strictMode ? 55 : 25;    // strict: only the best spots light up, punchier
@@ -114,7 +161,7 @@ function renderSuit(grid, mult) {
     const s = grid.scores[idx];
     const p = idx * 4;
     if (s < 0) { img.data[p + 3] = 0; continue; }
-    const eff = s * mult;
+    const eff = s * fruitAt(idx, i);
     if (eff < cut) { img.data[p + 3] = 0; continue; }
     const c = suitColor(eff);
     const a = strictMode ? Math.min(0.8, c[3] * 1.5) : c[3];
@@ -159,13 +206,12 @@ function buildTrackGradient() {
   return `linear-gradient(90deg, ${stops.join(', ')})`;
 }
 
-let rafId = null, pendingMult = null;
-function scheduleRender(mult) {
-  pendingMult = mult;
+let rafId = null, pendingIdx = 0;
+function scheduleRender(i) {
+  pendingIdx = i;
   if (rafId) return;
-  rafId = requestAnimationFrame(() => { rafId = null; suitOverlay.setUrl(renderSuit(suitGrid, pendingMult)); });
+  rafId = requestAnimationFrame(() => { rafId = null; suitOverlay.setUrl(renderSuit(suitGrid, pendingIdx)); });
 }
-function curMult() { return forecastDays ? forecastDays[fcIndex].fruiting : 1; }
 
 function initForecast() {
   document.getElementById('forecast').hidden = false;
@@ -184,7 +230,7 @@ function initForecast() {
   strictCb.addEventListener('change', () => {
     strictMode = strictCb.checked;
     localStorage.setItem('svampfinder.strict', strictMode ? '1' : '0');
-    scheduleRender(curMult());
+    scheduleRender(fcIndex);
   });
   setDay(fcIndex);
 }
@@ -192,7 +238,7 @@ function initForecast() {
 function setDay(i) {
   fcIndex = i;
   const d = forecastDays[i];
-  scheduleRender(d.fruiting);
+  scheduleRender(i);
   const chip = document.getElementById('fcChip');
   chip.textContent = d.verdict + (d.reason ? ' · ' + d.reason : '');
   chip.className = 'fc-chip lvl' + fruitingLevel(d.fruiting);
