@@ -100,12 +100,22 @@ def cell_of(lon, lat):
 # ---- presences: edible GBIF finds + the user's own reported finds ----
 # data/myfinds.geojson is the "Exportera mina fynd" file dropped into the repo —
 # this closes the loop so field finds train the model. Thinned to unique cells.
+# Coarse GBIF records (>1 km uncertainty) are EXCLUDED from training — a presence
+# that could be anywhere in a >3 km² circle is noise. They still show on the map
+# (occurrences.geojson keeps them); only the model drops them. User finds are
+# pinned exactly, so they're always kept.
+MAX_PRESENCE_UNC = 1000
 pres_idx = set()
 n_user = 0
+n_coarse_dropped = 0
 for src in ("occurrences.geojson", "myfinds.geojson", "mina-svampfynd.geojson"):
     p = os.path.join(HERE, "data", src)
     if not os.path.exists(p): continue
     for f in json.load(open(p)).get("features", []):
+        u = (f.get("properties") or {}).get("uncertainty_m")
+        if src == "occurrences.geojson" and u and u > MAX_PRESENCE_UNC:
+            n_coarse_dropped += 1
+            continue
         lon, lat = f["geometry"]["coordinates"]
         c = cell_of(lon, lat)
         if c is not None:
@@ -201,6 +211,7 @@ out = {
         "predictors": feat_names,
         "layers_used": used,
         "n_presence": len(pres_idx), "n_user_finds": n_user,
+        "n_coarse_dropped": n_coarse_dropped, "max_presence_uncertainty_m": MAX_PRESENCE_UNC,
         "n_background": len(background), "background_method": bg_method,
         "train_auc": train_auc,
         "built": "2026-08-11",
