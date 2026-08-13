@@ -148,7 +148,7 @@ async function loadOverlay() {
       fetch('data/kommuner.geojson').then(r => r.json()).catch(() => null),
     ]);
     suitGrid = grid; const m = grid.meta; const bounds = [[m.south, m.west], [m.north, m.east]];
-    if (kom) L.geoJSON(kom, { interactive: false, pane: 'overlayPane', style: { color: '#2A4634', weight: 1.5, opacity: 0.5, fill: false, dashArray: '5 4' } }).addTo(map);
+    if (kom) L.geoJSON(kom, { interactive: false, pane: 'overlayPane', style: { color: '#2A4634', weight: 2.5, opacity: 0.8, fill: false, dashArray: '6 5' } }).addTo(map);
     if (fc && fc.days && fc.days.length) {
       // Multi-region: each cell uses its nearest region anchor (Åre west,
       // Krokom east); fall back to the flat days[] as one anchorless region.

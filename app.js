@@ -44,7 +44,7 @@ const mineLayer = L.layerGroup().addTo(map);
 // Kommun outlines (Åre + Krokom).
 fetch('data/kommuner.geojson').then(r => r.json()).then(k => {
   L.geoJSON(k, { interactive: false, pane: 'overlayPane',
-    style: { color: '#2A4634', weight: 1.5, opacity: 0.5, fill: false, dashArray: '5 4' } }).addTo(map);
+    style: { color: '#2A4634', weight: 2.5, opacity: 0.8, fill: false, dashArray: '6 5' } }).addTo(map);
 }).catch(() => {});
 
 function speciesColor(sv) {
