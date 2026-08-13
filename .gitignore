@@ -4,3 +4,4 @@ node_modules/
 tmp/
 .cache/
 data/layers/targetgroup.geojson
+data/cloudfinds.geojson

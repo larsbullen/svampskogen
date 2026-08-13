@@ -108,7 +108,7 @@ MAX_PRESENCE_UNC = 1000
 pres_idx = set()
 n_user = 0
 n_coarse_dropped = 0
-for src in ("occurrences.geojson", "myfinds.geojson", "mina-svampfynd.geojson"):
+for src in ("occurrences.geojson", "myfinds.geojson", "mina-svampfynd.geojson", "cloudfinds.geojson"):
     p = os.path.join(HERE, "data", src)
     if not os.path.exists(p): continue
     for f in json.load(open(p)).get("features", []):

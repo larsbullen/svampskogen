@@ -236,6 +236,42 @@ function loadFinds() {
 }
 function saveFinds(list) { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
 
+/* ---------- Cloud sync (Supabase) ----------
+   Finds are stored per-device in localStorage (the map only shows THIS device's
+   finds). Each find is also pushed to a shared database so the model can train
+   on everyone's finds. Publishable key = safe to ship in the browser. */
+const SB_URL = 'https://frivhxpuntqwzrkxdmrp.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_Fjd4npCW40Bz8-nAhhYkYQ_NH6THI_9';
+const SB_HEAD = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+function deviceId() {
+  let d = localStorage.getItem('svampfinder.device');
+  if (!d) {
+    d = 'dev_' + ((self.crypto && crypto.randomUUID)
+      ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+    localStorage.setItem('svampfinder.device', d);
+  }
+  return d;
+}
+function cloudPush(f) {
+  const [lon, lat] = f.geometry.coordinates, p = f.properties;
+  const row = { id: p.id, device_id: deviceId(), species: p.sv, lat, lon,
+    date: p.date || null, count: p.count || null, notes: p.notes || null };
+  return fetch(SB_URL + '/finds', {
+    method: 'POST',
+    headers: { ...SB_HEAD, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify(row),
+  }).then(r => r.ok).catch(() => false);
+}
+function markSynced(id) {
+  const arr = loadFinds(); const t = arr.find(x => x.properties.id === id);
+  if (t) { t.properties.synced = true; saveFinds(arr); }
+}
+function retryUnsynced() {   // push any finds saved while offline
+  loadFinds().filter(f => !f.properties.synced).forEach(f =>
+    cloudPush(f).then(ok => { if (ok) markSynced(f.properties.id); }));
+}
+
 function renderMine() {
   mineLayer.clearLayers();
   const finds = loadFinds();
@@ -396,6 +432,7 @@ sheet.addEventListener('submit', (ev) => {
       count: document.getElementById('fCount').value || '',
       notes: document.getElementById('fNotes').value.trim(),
       created: todayISO(),
+      synced: false,
     },
   };
   const finds = loadFinds();
@@ -406,6 +443,7 @@ sheet.addEventListener('submit', (ev) => {
   document.getElementById('fNotes').value = '';
   document.getElementById('fCount').value = '';
   renderMine();
+  cloudPush(feature).then(ok => { if (ok) markSynced(feature.properties.id); });
   showToast(`${sv} sparad. Tack — det här blir träningsdata!`);
 });
 
@@ -466,6 +504,7 @@ function showToast(msg) {
 
 /* ---------- Init ---------- */
 renderMine();
+retryUnsynced();
 
 /* ---------- Service worker ---------- */
 if ('serviceWorker' in navigator) {
