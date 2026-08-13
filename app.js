@@ -270,11 +270,14 @@ function cloudPush(f) {
   const [lon, lat] = f.geometry.coordinates, p = f.properties;
   const row = { id: p.id, device_id: deviceId(), species: p.sv, lat, lon,
     date: p.date || null, count: p.count || null, notes: p.notes || null };
+  // Plain insert (return=minimal). Reads are locked to logged-in accounts, so
+  // an upsert (merge-duplicates) would need SELECT and get rejected. A retry of
+  // an already-saved find returns 409 (duplicate id) — that's success too.
   return fetch(SB_URL + '/finds', {
     method: 'POST',
-    headers: { ...SB_HEAD, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+    headers: { ...SB_HEAD, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify(row),
-  }).then(r => r.ok).catch(() => false);
+  }).then(r => r.ok || r.status === 409).catch(() => false);
 }
 function markSynced(id) {
   const arr = loadFinds(); const t = arr.find(x => x.properties.id === id);
