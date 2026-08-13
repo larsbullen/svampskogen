@@ -306,6 +306,7 @@ map.on('popupopen', (e) => {
   del.addEventListener('click', () => {
     const id = del.getAttribute('data-id');
     saveFinds(loadFinds().filter(f => f.properties.id !== id));
+    fetch(SB_URL + '/finds?id=eq.' + encodeURIComponent(id), { method: 'DELETE', headers: SB_HEAD }).catch(() => {});
     map.closePopup();
     renderMine();
     showToast('Fynd borttaget.');
@@ -447,18 +448,23 @@ sheet.addEventListener('submit', (ev) => {
   showToast(`${sv} sparad. Tack — det här blir träningsdata!`);
 });
 
-/* ---------- Locate control ---------- */
-let locateMarker = null;
+/* ---------- Live GPS location ---------- */
+let gpsMarker = null, gpsLatLng = null;
+function startGps() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.watchPosition(pos => {
+    gpsLatLng = [pos.coords.latitude, pos.coords.longitude];
+    if (!gpsMarker) gpsMarker = L.circleMarker(gpsLatLng, { radius: 7, color: '#fff', weight: 2, fillColor: '#2b7fff', fillOpacity: 1, pane: 'markerPane' }).addTo(map);
+    else gpsMarker.setLatLng(gpsLatLng);
+  }, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+}
+// The locate button re-centres on the live dot (or fetches a one-off fix).
 document.getElementById('btnLocate').addEventListener('click', (e) => {
-  const b = e.currentTarget; b.classList.add('active');
+  const b = e.currentTarget;
+  if (gpsLatLng) { map.setView(gpsLatLng, 14); return; }
+  b.classList.add('active');
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      b.classList.remove('active');
-      const ll = [pos.coords.latitude, pos.coords.longitude];
-      map.setView(ll, 14);
-      if (locateMarker) map.removeLayer(locateMarker);
-      locateMarker = L.circleMarker(ll, { radius: 7, color: '#fff', weight: 2, fillColor: '#2b7fff', fillOpacity: 1 }).addTo(map);
-    },
+    pos => { b.classList.remove('active'); gpsLatLng = [pos.coords.latitude, pos.coords.longitude]; map.setView(gpsLatLng, 14); startGps(); },
     () => { b.classList.remove('active'); showToast('Kunde inte hämta din plats.'); },
     { enableHighAccuracy: true, timeout: 10000 }
   );
@@ -505,6 +511,7 @@ function showToast(msg) {
 /* ---------- Init ---------- */
 renderMine();
 retryUnsynced();
+startGps();
 
 /* ---------- Service worker ---------- */
 if ('serviceWorker' in navigator) {
