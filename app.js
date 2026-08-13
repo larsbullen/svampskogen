@@ -56,7 +56,7 @@ function speciesColor(sv) {
 // grid; fruiting is a daily 0..1 index (SMHI rain+temp). The date picker scales
 // every cell's score by fruiting(date) so dry/cold days dim the whole map.
 let suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
-let strictMode = localStorage.getItem('svampfinder.strict') === '1';   // show only the best spots
+let strictMode = localStorage.getItem('svampfinder.strict') !== '0';   // show only the best spots (default ON)
 
 Promise.all([
   fetch('data/suitability.json').then(r => r.json()),

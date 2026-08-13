@@ -31,7 +31,7 @@ document.getElementById('gateForm').addEventListener('submit', async (e) => {
 });
 
 let map, suitGrid = null, forecastDays = null, suitOverlay = null, fcIndex = 0;
-let strictMode = false;   // show only the best spots
+let strictMode = true;   // show only the best spots (default ON)
 if (sessionStorage.getItem('overblick.ok') === '1') unlock();
 
 function unlock() {
