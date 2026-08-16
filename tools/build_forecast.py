@@ -187,7 +187,13 @@ def series_from_rec(rec, days_sorted):
     for i, d in enumerate(days_sorted):
         rain21 = round(sum(rain_by[max(0, i - 20): i + 1]), 1)
         temp = temp_by[i]
-        rain_f = clamp((rain21 - 15) / (70 - 15))
+        # 21-day rain: fruiting saturates at ~58 mm (was 70). Åre's wettest
+        # spells only reach ~56-61 mm of 21-day rain, so a 70 mm bar meant Åre
+        # could NEVER fully fruit while wetter Krokom saturated — hiding all of
+        # Åre in strict mode. 58 mm lets both regions peak on their genuinely
+        # wet periods; dry days (Åre median ~25 mm) still stay low so the map
+        # still dims when it should.
+        rain_f = clamp((rain21 - 15) / (58 - 15))
         if temp is None:
             temp_f = 0.4
         else:
