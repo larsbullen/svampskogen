@@ -60,12 +60,29 @@ else:
 # elevation squared (lets a linear model represent a mid-elevation optimum)
 cols["elev2"] = [e * e if e is not None else None for e in cols["elev"]]
 
+# aspect -> northness: north-component of the downhill direction (+1 due-north ..
+# -1 due-south), 0 on flat ground. Derived from the DEM (same grid, no new data).
+# Finds here skew strongly SOUTH-facing (warmer slopes fruit better in this cold
+# montane climate) — a strong signal (Welch t~-6), so it earns a predictor.
+def _elev(i, j):
+    return cols["elev"][i * NCOLS + j] if (0 <= i < NROWS and 0 <= j < NCOLS) else None
+northness = [None] * N
+for _idx in range(N):
+    _i, _j = _idx // NCOLS, _idx % NCOLS
+    _n, _s, _e, _w = _elev(_i - 1, _j), _elev(_i + 1, _j), _elev(_i, _j + 1), _elev(_i, _j - 1)
+    if None in (_n, _s, _e, _w):
+        continue
+    _gE, _gN = _e - _w, _n - _s
+    _mag = math.hypot(_gE, _gN)
+    northness[_idx] = 0.0 if _mag < 1e-6 else (_s - _n) / _mag
+cols["northness"] = northness
+
 # NOTE: 'conifer' is derived and available, but with so few presences the
 # background here is *also* mostly conifer, so a species-preference coefficient
 # is unreliable — species instead drives the forest mask below. Add it back to
 # this list once there are enough presences to estimate it.
 # Keep the feature set modest given few presences: terrain + wetness + canopy cover.
-feat_names = [k for k in ["elev", "elev2", "slope", "soil", "tall_cover_frac"] if k in cols]
+feat_names = [k for k in ["elev", "elev2", "slope", "soil", "tall_cover_frac", "northness"] if k in cols]
 
 # ---- validity mask: need elevation; drop cells above the local tree line hard? no — let model learn ----
 valid = [cols["elev"][i] is not None for i in range(N)]
