@@ -62,9 +62,9 @@
   "counts": {
     "corridor_cells": 3808738,
     "passing_cells": 1383184,
-    "areas": 3242,
+    "areas": 4570,
     "sites": 150,
-    "sites_before_thinning": 716,
+    "sites_before_thinning": 1822,
     "wetland_polygons": 1697,
     "water_features": 552,
     "huts": 15

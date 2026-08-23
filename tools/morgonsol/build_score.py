@@ -69,7 +69,14 @@ BAND_RULES = [
     ("mycket bra", 0.75, 3.0, 0.65, 2.2),
     ("topp", 0.82, 2.0, 0.75, 1.6),
 ]
-MIN_POLY_M2 = 4000.0    # ~63x63 m; smaller than this is a sliver, not a campsite
+# Minimum contiguous area per band. This is a CARTOGRAPHIC threshold — it stops
+# the map dissolving into confetti — so it must not be so large that it demotes
+# genuinely good ground. A "bra" area is context and can afford to be big; a
+# "topp" patch only has to hold a tent and its surroundings, and 1200 m2 is
+# already 35x35 m. Using one big value for all three silently relabelled
+# topp-grade cells as "mycket bra" wherever their patch was small.
+MIN_BAND_M2 = {"bra": 4000.0, "mycket bra": 2000.0, "topp": 1200.0}
+MIN_POLY_M2 = 1200.0    # floor for anything drawn at all
 
 # Morning sun is a tiebreaker, never a gate — dry and level ground win every
 # time. --sun-weight re-dials it and the rest are renormalised around it.
@@ -127,6 +134,7 @@ def rasterize(geoms, grid, all_touched=True):
     if not geoms:
         return np.zeros((grid["height"], grid["width"]), dtype=bool)
     tf = rasterio.transform.Affine(*grid["transform"])
+
     arr = features.rasterize(
         ((g, 1) for g in geoms),
         out_shape=(grid["height"], grid["width"]),
@@ -171,6 +179,8 @@ def main():
     import argparse
 
     ap = argparse.ArgumentParser()
+    ap.add_argument("--dump-diag", metavar="PATH", default=None,
+                    help="write score/band/component rasters for inspecting a site")
     ap.add_argument(
         "--sun-weight",
         type=float,
@@ -401,7 +411,7 @@ def main():
         lab_b, n_b = ndimage.label(m, structure=np.ones((3, 3)))
         if n_b:
             comp_sizes = np.bincount(lab_b.ravel())
-            too_small = comp_sizes < (MIN_POLY_M2 / (res * res))
+            too_small = comp_sizes < (MIN_BAND_M2.get(name, MIN_POLY_M2) / (res * res))
             too_small[0] = True
             m = ~too_small[lab_b]
 
@@ -420,13 +430,27 @@ def main():
     b2 = BAND_RULES[1][0]  # name of the middle band, used for candidate extraction
 
     tf = rasterio.transform.Affine(*grid["transform"])
+
+    if args.dump_diag:
+        diag = {"score": score, "band": banded.astype("float32"), "s_dry": s_dry,
+                "s_level": s_level, "s_smooth": s_smooth, "s_pos": s_pos,
+                "slope": slope, "rough": rough, "hard_ok": hard_ok.astype("float32")}
+        prof = {"driver": "GTiff", "height": H, "width": W, "count": len(diag),
+                "dtype": "float32", "crs": grid["crs"], "transform": tf,
+                "nodata": np.nan, "compress": "deflate", "tiled": True}
+        with rasterio.open(args.dump_diag, "w", **prof) as d:
+            for i, (k, v) in enumerate(diag.items(), start=1):
+                d.write(np.asarray(v, dtype="float32"), i)
+                d.set_band_description(i, k)
+        print("diagnostics -> %s" % args.dump_diag)
+
     area_feats = []
     for geom, val in features.shapes(banded, mask=banded > 0, transform=tf, connectivity=8):
         g = shape(geom)
-        if g.area < MIN_POLY_M2:
+        if g.area < MIN_BAND_M2.get(labels[int(val)], MIN_POLY_M2):
             continue
         g = g.simplify(res * 2.0, preserve_topology=True)
-        if g.is_empty or g.area < MIN_POLY_M2:
+        if g.is_empty or g.area < MIN_BAND_M2.get(labels[int(val)], MIN_POLY_M2):
             continue
         area_feats.append(
             {
@@ -495,6 +519,13 @@ def main():
         if float(d_water[r, c]) < 1e8:
             why.append("vatten %d m" % int(round(d_water[r, c] / 10.0) * 10))
 
+        cell_grade, cell_grade_label = None, None
+        for gname, gmin_s, gmax_sl, gmin_dry, gmax_rg in BAND_RULES:
+            if (score[r, c] >= gmin_s and slope[r, c] <= gmax_sl
+                    and s_dry[r, c] >= gmin_dry and rough[r, c] <= gmax_rg):
+                cell_grade, cell_grade_label = gname, gname
+        drawn = int(banded[r, c])
+
         tf_here = (float(tree_frac[r, c])
                    if tree_frac is not None and np.isfinite(tree_frac[r, c]) else None)
         if tf_here is None:
@@ -519,6 +550,8 @@ def main():
                 "type": "Feature",
                 "properties": {
                     "score": round(float(maxval[i]), 3),
+                    "grade": cell_grade,
+                    "grade_drawn": labels.get(drawn),
                     "tree_frac": round(tf_here, 2) if tf_here is not None else None,
                     "shelter": shelter,
                     "shelter_label": shelter_label,

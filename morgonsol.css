@@ -210,3 +210,8 @@ body {
 .pin-key-head b { color: var(--ink); }
 .pin-key .legend li { cursor: default; }
 .pin-hint { display: block; font-size: 11px; color: var(--ink-soft); }
+
+.pop .note-inline {
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 9px; margin-top: 7px;
+}

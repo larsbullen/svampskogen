@@ -12,7 +12,7 @@
  */
 'use strict';
 
-const BUILD = 41;   // bump on every deploy; busts the 10-min GitHub Pages cache
+const BUILD = 42;   // bump on every deploy; busts the 10-min GitHub Pages cache
 const DATA = 'data/morgonsol/';
 const BAND_COLOR = { 1: '#f2d9a0', 2: '#e8a24a', 3: '#cf5b1c' };
 const BAND_NAME = { 1: 'Bra', 2: 'Mycket bra', 3: 'Topp' };
@@ -366,6 +366,7 @@ function sitePopup(p, lat, lon) {
       ${(SHELTER[p.shelter] || SHELTER.okand).label}</h3>
     <p class="why">${(SHELTER[p.shelter] || SHELTER.okand).hint} · ${CAP_LABEL[p.capacity] || ''}</p>
     <dl>
+      ${row('Markkvalitet', p.grade || null)}
       ${row('Rangordning', '#' + p.rank + ' av 150')}
       ${row('Markpoäng', p.score)}
       ${row('Trädtäcke', p.tree_frac === null || p.tree_frac === undefined ? null
@@ -381,6 +382,10 @@ function sitePopup(p, lat, lon) {
       ${row('Närmsta stuga', p.hut_m !== null ? (p.hut_m / 1000).toFixed(1) + ' km' : null)}
       ${row('Sol på tältet', fmtHour(p.first_light))}
     </dl>
+    ${p.grade && p.grade_drawn && p.grade !== p.grade_drawn
+      ? `<p class="why note-inline">Själva punkten är <b>${p.grade}</b>-mark, men ytan
+         under den ritas som <b>${p.grade_drawn}</b>: ${p.grade}-fläcken här är
+         mindre än den minsta yta kartan ritar ut. Punkten gäller.</p>` : ''}
     <p class="why">${p.why || ''}</p>
     <p class="why"><a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">${lat.toFixed(5)}, ${lon.toFixed(5)}</a></p>
   </div>`;
