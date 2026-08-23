@@ -197,3 +197,16 @@ body {
 .toast[hidden] { display: none; }
 
 .site .sm.alt { color: var(--accent); font-weight: 600; }
+
+/* Site pins: colour = character (shelter), size = how much room there is. */
+.pin { border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.45); }
+.pop-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 6px; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.2); }
+
+/* Key for the pin colours — they encode character, so they need their own
+   explanation rather than sharing the layer-toggle list. */
+.pin-key { margin: 0 0 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.pin-key-head { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin-bottom: 6px; }
+.pin-key-head b { color: var(--ink); }
+.pin-key .legend li { cursor: default; }
+.pin-hint { display: block; font-size: 11px; color: var(--ink-soft); }

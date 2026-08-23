@@ -37,6 +37,7 @@ DATA = os.path.normpath(os.path.join(HERE, "..", "..", "data", "morgonsol"))
 TERRAIN = "/private/tmp/morgonsol_dem/terrain.tif"
 SUN = "/private/tmp/morgonsol_dem/sun.tif"
 SOIL = "/private/tmp/morgonsol_dem/soil.tif"  # optional
+CANOPY = "/private/tmp/morgonsol_dem/canopy.tif"  # optional
 
 to_sweref = Transformer.from_crs("EPSG:4326", "EPSG:3006", always_xy=True).transform
 to_wgs84 = Transformer.from_crs("EPSG:3006", "EPSG:4326", always_xy=True).transform
@@ -195,6 +196,8 @@ def main():
     sun, _ = read_bands(SUN)
     soil, _ = read_bands(SOIL)
     slu_water = soil.get("water") if soil else None
+    canopy, _ = read_bands(CANOPY)
+    tree_frac = canopy.get("tree_frac") if canopy else None
 
     slope = terrain["slope"]
     rough = terrain["rough"]
@@ -492,11 +495,34 @@ def main():
         if float(d_water[r, c]) < 1e8:
             why.append("vatten %d m" % int(round(d_water[r, c] / 10.0) * 10))
 
+        tf_here = (float(tree_frac[r, c])
+                   if tree_frac is not None and np.isfinite(tree_frac[r, c]) else None)
+        if tf_here is None:
+            shelter, shelter_label = "okand", "Okänt"
+        elif tf_here >= 0.30:
+            shelter, shelter_label = "skog", "Skog"
+        elif tf_here >= 0.10:
+            shelter, shelter_label = "glest", "Glest / skogsbryn"
+        else:
+            shelter, shelter_label = "kalfjall", "Kalfjäll"
+
+        area = float(sizes[i]) * res * res
+        if area >= 20000:
+            capacity = "stor"
+        elif area >= 5000:
+            capacity = "medel"
+        else:
+            capacity = "liten"
+
         cands.append(
             {
                 "type": "Feature",
                 "properties": {
                     "score": round(float(maxval[i]), 3),
+                    "tree_frac": round(tf_here, 2) if tf_here is not None else None,
+                    "shelter": shelter,
+                    "shelter_label": shelter_label,
+                    "capacity": capacity,
                     "elev_m": int(round(float(elev[r, c]))),
                     "slope_deg": round(float(slope[r, c]), 1),
                     "first_light": (

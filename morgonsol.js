@@ -5,13 +5,32 @@
  *   violet dashed    legal camping/access bans — deliberately OFF the warm
  *                    quality ramp, so 'best ground' can never be misread as
  *                    'forbidden'; the dash carries it for colour-blind eyes too
- *   numbered pins    the best single spot inside each good patch
+ *   coloured pins    the best single spot inside each good patch, coloured by
+ *                    CHARACTER (skog / glest / kalfjäll) rather than by rank —
+ *                    all 150 score 0.93-0.98, so ranking them 1..150 implied a
+ *                    precision that isn't there. Rank stays in the popup.
  */
 'use strict';
 
 const DATA = 'data/morgonsol/';
 const BAND_COLOR = { 1: '#f2d9a0', 2: '#e8a24a', 3: '#cf5b1c' };
 const BAND_NAME = { 1: 'Bra', 2: 'Mycket bra', 3: 'Topp' };
+
+// Pins are classified by CHARACTER, not by a rank number. Across the 150 sites
+// the score spread is 0.93-0.98 — they are all top-tier ground, so numbering
+// them 1..150 implied a precision the model doesn't have. What actually varies,
+// and actually changes the decision, is shelter: 20 wooded sites at a median
+// 636 m against 121 open ones at 901 m. Colour carries that. The numeric rank
+// still lives in the popup as a tiebreaker.
+const SHELTER = {
+  skog:     { color: '#2f7d4f', label: 'Skog',              hint: 'Lä, ved, skymd — varmast' },
+  glest:    { color: '#7d9c3f', label: 'Glest / skogsbryn', hint: 'Delvis lä, viss utsikt' },
+  kalfjall: { color: '#2b8f96', label: 'Kalfjäll',          hint: 'Öppet, blåsigt, utsikt, mindre mygg' },
+  okand:    { color: '#8a8a8a', label: 'Okänt',             hint: 'Trädtäcke okänt här' },
+};
+const CAP_RADIUS = { liten: 9, medel: 11, stor: 14 };
+const CAP_LABEL = { liten: 'plats för 1–2 tält', medel: 'plats för flera tält',
+                    stor: 'stor öppen yta' };
 
 const map = L.map('map', {
   zoomControl: true,
@@ -55,7 +74,7 @@ const LAYER_ORDER = [
   ['ban', 'Tält-/beträdnadsförbud', '#7b2fbe', true],
   ['route', 'Leden', '#2f4f8f', true],
   ['huts', 'Stugor', '#4c3b2a', true],
-  ['sites', 'Bästa platserna', '#cf5b1c', true],
+  ['sites', 'Tältplatser', '#2b8f96', true],
 ];
 const counts = {};
 let allSites = [];
@@ -305,12 +324,14 @@ function refreshContours() {
 }
 
 // ------------------------------------------------------------------- sites
-function pinIcon(band, rank) {
-  const size = band === 3 ? 26 : 22;
+function pinIcon(p) {
+  const sh = SHELTER[p.shelter] || SHELTER.okand;
+  const r = CAP_RADIUS[p.capacity] || 11;
+  const size = r * 2;
   return L.divIcon({
-    className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
-    html: `<div class="pin" style="width:${size}px;height:${size}px;background:${BAND_COLOR[band]};
-      color:${band === 3 ? '#fff' : '#1a1209'}">${rank}</div>`,
+    className: '', iconSize: [size, size], iconAnchor: [r, r],
+    html: `<div class="pin" title="${sh.label}"
+      style="width:${size}px;height:${size}px;background:${sh.color}"></div>`,
   });
 }
 
@@ -330,8 +351,7 @@ function renderSites(maxOff) {
     .forEach((f) => {
       const p = f.properties;
       const [lon, lat] = f.geometry.coordinates;
-      const band = siteBand(p);
-      L.marker([lat, lon], { icon: pinIcon(band, p.rank) })
+      L.marker([lat, lon], { icon: pinIcon(p) })
         .bindPopup(sitePopup(p, lat, lon))
         .addTo(layers.sites);
     });
@@ -340,8 +360,14 @@ function renderSites(maxOff) {
 function sitePopup(p, lat, lon) {
   const row = (k, v) => (v === null || v === undefined ? '' : `<dt>${k}</dt><dd>${v}</dd>`);
   return `<div class="pop">
-    <h3>#${p.rank} · ${BAND_NAME[siteBand(p)]}</h3>
+    <h3><span class="pop-dot" style="background:${(SHELTER[p.shelter] || SHELTER.okand).color}"></span>
+      ${(SHELTER[p.shelter] || SHELTER.okand).label}</h3>
+    <p class="why">${(SHELTER[p.shelter] || SHELTER.okand).hint} · ${CAP_LABEL[p.capacity] || ''}</p>
     <dl>
+      ${row('Rangordning', '#' + p.rank + ' av 150')}
+      ${row('Markpoäng', p.score)}
+      ${row('Trädtäcke', p.tree_frac === null || p.tree_frac === undefined ? null
+             : Math.round(p.tree_frac * 100) + '%')}
       ${row('Led', p.route || null)}
       ${row('Vid km', p.route_km !== null ? p.route_km.toFixed(1) : null)}
       ${row('Från leden', p.off_route_m !== null ? p.off_route_m + ' m' : null)}
@@ -371,9 +397,11 @@ function renderSiteList(maxOff) {
       const [lon, lat] = f.geometry.coordinates;
       const li = document.createElement('li');
       li.className = 'site b' + siteBand(p);
-      li.innerHTML = `<span class="rank">${p.rank}</span>
+      const sh = SHELTER[p.shelter] || SHELTER.okand;
+      li.innerHTML = `<span class="rank" style="background:${sh.color};color:#fff"
+        title="${sh.label}">${sh.label.charAt(0)}</span>
         <span class="meta">
-          <span class="hd">km ${p.route_km !== null ? p.route_km.toFixed(1) : '?'} · ${p.elev_m} m · ${p.slope_deg}°</span>
+          <span class="hd">${sh.label} · km ${p.route_km !== null ? p.route_km.toFixed(1) : '?'} · ${p.elev_m} m</span>
           <span class="sm">${p.off_route_m} m från leden${p.water_m !== null ? ' · vatten ' + p.water_m + ' m' : ''} · sol ${fmtHour(p.first_light)}</span>
           ${isAlt(p) ? `<span class="sm alt">↔ ${p.route}</span>` : ''}
         </span>`;
@@ -401,6 +429,26 @@ function renderLegend() {
     };
     ul.appendChild(li);
   });
+
+  // Pin colours need their own key: they encode character, not quality.
+  const counts_by = {};
+  allSites.forEach((f) => {
+    const k = f.properties.shelter || 'okand';
+    counts_by[k] = (counts_by[k] || 0) + 1;
+  });
+  const keyRows = Object.keys(SHELTER)
+    .filter(k => counts_by[k])
+    .map(k => `<li><span class="sw" style="background:${SHELTER[k].color};border-radius:50%;
+      width:14px;height:14px"></span><span class="lbl">${SHELTER[k].label}
+      <span class="pin-hint">${SHELTER[k].hint}</span></span>
+      <span class="n">${counts_by[k]}</span></li>`).join('');
+  const keyEl = $('pinKey');
+  if (keyEl) {
+    keyEl.innerHTML = `<div class="pin-key-head">Tältplatserna färgas efter
+      <b>karaktär</b>, inte rang — alla 150 ligger på likvärdigt bra mark
+      (poäng 0,93–0,98). Storleken visar hur stor ytan är. Rangordningen finns
+      kvar i detaljrutan.</div><ul class="legend">${keyRows}</ul>`;
+  }
 
   if (meta) {
     const km2 = (n) => (n * meta.resolution_m * meta.resolution_m / 1e6).toFixed(1);
