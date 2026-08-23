@@ -12,6 +12,7 @@
  */
 'use strict';
 
+const BUILD = 41;   // bump on every deploy; busts the 10-min GitHub Pages cache
 const DATA = 'data/morgonsol/';
 const BAND_COLOR = { 1: '#f2d9a0', 2: '#e8a24a', 3: '#cf5b1c' };
 const BAND_NAME = { 1: 'Bra', 2: 'Mycket bra', 3: 'Topp' };
@@ -81,7 +82,8 @@ let allSites = [];
 let meta = null;
 
 const $ = (id) => document.getElementById(id);
-const jget = (f) => fetch(DATA + f).then(r => (r.ok ? r.json() : null)).catch(() => null);
+const jget = (f) => fetch(`${DATA}${f}?v=${BUILD}`)
+  .then(r => (r.ok ? r.json() : null)).catch(() => null);
 
 function fmtHour(h) {
   if (h === null || h === undefined || h >= 24) return '–';
@@ -501,6 +503,7 @@ function renderAbout() {
     <p class="note"><b>Höjdkurvor</b> var 20:e meter (grövre linje var 100:e),
       genererade ur samma höjdmodell som poängen — de stämmer alltså med
       terrängen kartan räknat på. Minorkurvorna tänds först vid inzoomning.</p>
+    <p class="note">Version <b>${BUILD}</b> · uppdaterad ${meta.built_for_route ? '' : ''}${new Date().toISOString().slice(0,10)}</p>
     <p class="note"><b>Källor:</b> ${p.dem}; myr/vatten/leder/stugor från OpenStreetMap;
       zoner och reservatsgräns från Länsstyrelsen Jämtland; markfuktighet: ${p.soil_moisture}.</p>
   `;
@@ -642,6 +645,20 @@ if (navigator.permissions && navigator.permissions.query) {
     .catch(() => {});
 }
 
+// GitHub Pages serves everything with max-age=600, which also applies to sw.js —
+// so without updateViaCache the browser can sit on a stale worker for ten
+// minutes and never notice a deploy. Force a fresh check, and reload once when
+// a new worker takes over so the page isn't left half-updated.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => { reg.update().catch(() => {}); })
+      .catch(() => {});
+  });
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return;
+    reloaded = true;
+    window.location.reload();
+  });
 }
