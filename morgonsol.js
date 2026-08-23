@@ -47,7 +47,7 @@ const layers = {
   huts: L.layerGroup(),
 };
 const LAYER_ORDER = [
-  ['contours', 'Höjdkurvor (20 m)', '#8a6a42', true],
+  ['contours', 'Höjdkurvor (20 m)', '#9c8161', true],
   ['wetland', 'Myr / våtmark', '#6f8fa6', false],
   ['areas1', 'Bra mark', BAND_COLOR[1], true],
   ['areas2', 'Mycket bra mark', BAND_COLOR[2], true],
@@ -198,11 +198,11 @@ function setupContours(gj) {
 
   contourMinor = L.geoJSON(split(false), {
     renderer: canvas, interactive: false,
-    style: { color: '#8a6a42', weight: 0.6, opacity: 0.42 },
+    style: { color: '#9c8161', weight: 0.5, opacity: 0.22 },
   });
   contourIndex = L.geoJSON(split(true), {
     renderer: canvas, interactive: false,
-    style: { color: '#6d5230', weight: 1.3, opacity: 0.7 },
+    style: { color: '#8a6f4d', weight: 0.9, opacity: 0.42 },
   });
   contourIndexFeatures = feats.filter(f => f.properties.index);
 
@@ -222,12 +222,12 @@ function refreshContours() {
   // Minor lines are noise below z12.
   if (z >= 12) {
     if (!layers.contours.hasLayer(contourMinor)) contourMinor.addTo(layers.contours);
-    contourMinor.setStyle({ weight: z >= 14 ? 0.8 : 0.6, opacity: z >= 13 ? 0.5 : 0.35 });
+    contourMinor.setStyle({ weight: z >= 14 ? 0.6 : 0.5, opacity: z >= 13 ? 0.30 : 0.20 });
   } else if (layers.contours.hasLayer(contourMinor)) {
     layers.contours.removeLayer(contourMinor);
   }
   if (contourIndex) {
-    contourIndex.setStyle({ weight: z >= 13 ? 1.6 : 1.1, opacity: z >= 11 ? 0.75 : 0.5 });
+    contourIndex.setStyle({ weight: z >= 13 ? 1.1 : 0.85, opacity: z >= 11 ? 0.48 : 0.32 });
   }
 
   // Labels only where they fit, only in view, and capped so a pan never drops
