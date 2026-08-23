@@ -1,0 +1,9 @@
+{
+  "date": "2026-08-26",
+  "utc_offset": 2.0,
+  "morning_window_end": 10.0,
+  "sunrise_flat": 5.683,
+  "sunset_flat": 20.65,
+  "daylight_h": 14.97,
+  "first_light_median": 6.5
+}

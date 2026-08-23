@@ -240,6 +240,47 @@ def main():
         v = arr[np.isfinite(arr)]
         print("  %-12s min %6.2f  median %6.2f  max %6.2f" % (name, v.min(), np.median(v), v.max()))
 
+    # Sunrise/sunset for a flat horizon at the centre of the area — what a
+    # forecast would tell you. Terrain makes real first light later than this,
+    # which is the whole point of the ray-cast layer, so both are worth stating.
+    def horizon_cross(rising):
+        prev = None
+        step = 1.0 / 60.0
+        t = 0.0
+        while t < 24.0:
+            when = dt.datetime.combine(date, dt.time(0, 0)) + dt.timedelta(
+                hours=t - args.utc_offset)
+            _, a = solar_position(lat_c, lon_c, when)
+            if prev is not None:
+                if rising and prev < 0 <= a:
+                    return t
+                if not rising and prev >= 0 > a:
+                    return t
+            prev = a
+            t += step
+        return None
+
+    sunrise, sunset = horizon_cross(True), horizon_cross(False)
+    fl = first_light[np.isfinite(first_light) & (first_light < 24)]
+    meta = {
+        "date": args.date,
+        "utc_offset": args.utc_offset,
+        "morning_window_end": args.morning_end,
+        "sunrise_flat": round(sunrise, 3) if sunrise else None,
+        "sunset_flat": round(sunset, 3) if sunset else None,
+        "daylight_h": round(sunset - sunrise, 2) if sunrise and sunset else None,
+        "first_light_median": round(float(np.median(fl)), 3) if fl.size else None,
+    }
+    with open(os.path.join(DATA, "sun_meta.json"), "w") as f:
+        json.dump(meta, f, indent=2)
+
+    def hhmm(x):
+        return "--:--" if x is None else "%02d:%02d" % (int(x), int(round((x % 1) * 60)))
+
+    print("  sunrise %s  sunset %s  (%.1f h daylight, flat horizon)"
+          % (hhmm(sunrise), hhmm(sunset), meta["daylight_h"] or 0))
+    print("  median first light behind real terrain: %s" % hhmm(meta["first_light_median"]))
+
 
 if __name__ == "__main__":
     main()

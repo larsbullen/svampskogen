@@ -212,7 +212,17 @@ def main():
     except Exception:
         pass
     provenance["dem"] = "%s, on a %g m grid" % (dem_src, res)
-    provenance["sun"] = "ray-cast terrain shadowing, NOAA solar position" if sun else "absent"
+    if sun:
+        try:
+            with open(os.path.join(DATA, "sun_meta.json")) as f:
+                sm = json.load(f)
+            provenance["sun"] = (
+                "ray-cast terrain shadowing (NOAA solar position) for %s" % sm["date"])
+            provenance["sun_meta"] = sm
+        except Exception:
+            provenance["sun"] = "ray-cast terrain shadowing, NOAA solar position"
+    else:
+        provenance["sun"] = "absent"
 
     # ------------------------------------------------------------ hard masks
     corridor = rasterize(geoms_from("corridor.geojson"), grid)

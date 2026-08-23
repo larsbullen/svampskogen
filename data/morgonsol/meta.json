@@ -46,16 +46,25 @@
   },
   "provenance": {
     "dem": "Lantmateriet Markhojdmodell 1 m DTM (bare earth, CC BY 4.0), on a 10 m grid",
-    "sun": "ray-cast terrain shadowing, NOAA solar position",
+    "sun": "ray-cast terrain shadowing (NOAA solar position) for 2026-08-26",
+    "sun_meta": {
+      "date": "2026-08-26",
+      "utc_offset": 2.0,
+      "morning_window_end": 10.0,
+      "sunrise_flat": 5.683,
+      "sunset_flat": 20.65,
+      "daylight_h": 14.97,
+      "first_light_median": 6.5
+    },
     "ban_zones": "7 restriction polygons applied (Blanktj\u00e4rn betr\u00e4dnadsf\u00f6rbud, Blanktj\u00e4rn \u00f6vernattningsf\u00f6rbud, Gr\u00f6nvallen \u00f6vernattningsf\u00f6rbud, Isj\u00f6dalen \u00f6vernattningsf\u00f6rbud, Pyramiderna betr\u00e4dnadsf\u00f6rbud, Pyramiderna \u00f6vernattningsf\u00f6rbud); 4 permissive zones ignored",
     "soil_moisture": "SLU Markfuktighetskarta (2 m, classified), 98.3% grid coverage"
   },
   "counts": {
     "corridor_cells": 3221375,
     "passing_cells": 1216189,
-    "areas": 2900,
+    "areas": 2914,
     "sites": 150,
-    "sites_before_thinning": 672,
+    "sites_before_thinning": 674,
     "wetland_polygons": 1697,
     "water_features": 552,
     "huts": 15

@@ -353,6 +353,9 @@ function renderLegend() {
 function renderAbout() {
   if (!meta) return;
   const p = meta.provenance || {};
+  const sm = p.sun_meta || null;
+  const hhmm = (x) => (x === null || x === undefined ? '–'
+    : String(Math.floor(x)).padStart(2, '0') + ':' + String(Math.round((x % 1) * 60)).padStart(2, '0'));
   const w = meta.weights || {};
   const pct = (x) => Math.round(x * 100) + '%';
   $('aboutBody').innerHTML = `
@@ -381,6 +384,11 @@ function renderAbout() {
     </div>
     <p class="note"><b>Förbudsområden</b> kommer från Länsstyrelsens zonkarta
       (${meta.hard_masks.ban_zones}). Kontrollera alltid skyltning på plats.</p>
+    ${sm ? `<p class="note"><b>Solen är räknad för ${sm.date}.</b>
+      Soluppgång ${hhmm(sm.sunrise_flat)}, solnedgång ${hhmm(sm.sunset_flat)}
+      (${sm.daylight_h} h dagsljus vid fri horisont). Bakom verklig terräng
+      kommer solen typiskt först ${hhmm(sm.first_light_median)} — det är den
+      skillnaden kartan räknar ut, kurva för kurva.</p>` : ''}
     <p class="note"><b>Höjdkurvor</b> var 20:e meter (grövre linje var 100:e),
       genererade ur samma höjdmodell som poängen — de stämmer alltså med
       terrängen kartan räknat på. Minorkurvorna tänds först vid inzoomning.</p>
