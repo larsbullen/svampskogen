@@ -60,11 +60,11 @@
     "soil_moisture": "SLU Markfuktighetskarta (2 m, classified), 98.3% grid coverage"
   },
   "counts": {
-    "corridor_cells": 3512080,
-    "passing_cells": 1316179,
-    "areas": 3100,
+    "corridor_cells": 3808738,
+    "passing_cells": 1383184,
+    "areas": 3242,
     "sites": 150,
-    "sites_before_thinning": 695,
+    "sites_before_thinning": 716,
     "wetland_polygons": 1697,
     "water_features": 552,
     "huts": 15
