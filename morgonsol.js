@@ -202,7 +202,7 @@ function setupContours(gj) {
   });
   contourIndex = L.geoJSON(split(true), {
     renderer: canvas, interactive: false,
-    style: { color: '#8a6f4d', weight: 0.9, opacity: 0.42 },
+    style: { color: '#a08a6b', weight: 0.7, opacity: 0.26 },
   });
   contourIndexFeatures = feats.filter(f => f.properties.index);
 
@@ -227,7 +227,7 @@ function refreshContours() {
     layers.contours.removeLayer(contourMinor);
   }
   if (contourIndex) {
-    contourIndex.setStyle({ weight: z >= 13 ? 1.1 : 0.85, opacity: z >= 11 ? 0.48 : 0.32 });
+    contourIndex.setStyle({ weight: z >= 13 ? 0.85 : 0.7, opacity: z >= 11 ? 0.30 : 0.22 });
   }
 
   // Labels only where they fit, only in view, and capped so a pan never drops
