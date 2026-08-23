@@ -181,3 +181,17 @@ body {
 .wx-day .r { font-size: 10px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .wx-day.rain { background: color-mix(in srgb, #6f8fa6 18%, var(--surface-2)); }
 .wx-src { font-size: 11px; color: var(--ink-soft); margin: 7px 0 0; }
+
+/* Toast — GPS status and errors. Without this every geolocation failure was
+   silent and the button just looked broken. */
+.toast {
+  position: absolute; z-index: 1200;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 14px; border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); box-shadow: var(--shadow);
+  font-size: 13px; line-height: 1.45; text-align: center;
+}
+.toast[hidden] { display: none; }

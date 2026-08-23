@@ -463,29 +463,116 @@ $('fOff').oninput = (e) => {
 };
 
 // --------------------------------------------------------------------- GPS
+// iOS Safari specifics this is built around:
+//  - The permission prompt is far more reliable when the FIRST request comes
+//    from a real user gesture. A watchPosition fired at page load often gets
+//    ignored or dismissed, and then nothing ever happens.
+//  - enableHighAccuracy:true can take 20 s+ outdoors and simply time out. Ask
+//    for a coarse fix first so something appears, then upgrade to precise.
+//  - Errors must be shown. The previous version passed an empty error handler,
+//    so every failure was silent and looked like a dead button.
 let gpsMarker = null;
-function showGps(pos) {
+let gpsCircle = null;
+let gpsWatchId = null;
+
+function toast(msg, ms) {
+  let el = $('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.hidden = true; }, ms || 4200);
+}
+
+function showGps(pos, recentre) {
   const ll = [pos.coords.latitude, pos.coords.longitude];
+  const acc = pos.coords.accuracy || 0;
   if (!gpsMarker) {
     gpsMarker = L.marker(ll, {
-      icon: L.divIcon({ className: '', html: '<div class="gps-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }),
+      icon: L.divIcon({ className: '', html: '<div class="gps-dot"></div>',
+                        iconSize: [14, 14], iconAnchor: [7, 7] }),
       interactive: false, zIndexOffset: 1000,
     }).addTo(map);
+    gpsCircle = L.circle(ll, { radius: acc, interactive: false, weight: 1,
+                               color: '#1e73e8', opacity: .5, fillOpacity: .10 }).addTo(map);
   } else {
     gpsMarker.setLatLng(ll);
+    if (gpsCircle) { gpsCircle.setLatLng(ll); gpsCircle.setRadius(acc); }
   }
+  if (recentre) map.setView(ll, Math.max(map.getZoom(), 15));
 }
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(showGps, () => {}, {
-    enableHighAccuracy: true, maximumAge: 30000, timeout: 25000,
-  });
-}
-$('btnLocate').onclick = () => {
-  if (gpsMarker) map.setView(gpsMarker.getLatLng(), 15);
-  else if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((p) => { showGps(p); map.setView([p.coords.latitude, p.coords.longitude], 15); });
+
+function gpsError(err, context) {
+  // err.code: 1 PERMISSION_DENIED, 2 POSITION_UNAVAILABLE, 3 TIMEOUT
+  if (err.code === 1) {
+    toast('Platsåtkomst nekad. iPhone: Inställningar ▸ Integritet ▸ Platstjänster ▸ '
+        + 'Safari-webbplatser ▸ Fråga/Tillåt, och Inställningar ▸ Safari ▸ Plats.', 9000);
+  } else if (err.code === 3) {
+    toast('Hittade ingen position i tid — försöker igen med grövre precision.', 4000);
+  } else {
+    toast('Positionen är inte tillgänglig just nu (' + (err.message || 'okänt fel') + ').', 6000);
   }
-};
+  console.warn('[morgonsol] geolocation ' + context + ':', err.code, err.message);
+}
+
+function startWatch() {
+  if (gpsWatchId !== null || !navigator.geolocation) return;
+  gpsWatchId = navigator.geolocation.watchPosition(
+    (p) => showGps(p, false),
+    (e) => gpsError(e, 'watch'),
+    { enableHighAccuracy: true, maximumAge: 15000, timeout: 30000 },
+  );
+}
+
+function locate() {
+  if (!navigator.geolocation) {
+    toast('Den här webbläsaren har ingen platstjänst.');
+    return;
+  }
+  if (!window.isSecureContext) {
+    toast('Platstjänst kräver https — öppna sidan via https-adressen.', 7000);
+    return;
+  }
+  if (gpsMarker) {                       // already have a fix: just recentre
+    map.setView(gpsMarker.getLatLng(), Math.max(map.getZoom(), 15));
+    startWatch();
+    return;
+  }
+  toast('Söker position…', 3000);
+  // Coarse first — fast, and enough to put you on the map.
+  navigator.geolocation.getCurrentPosition(
+    (p) => { showGps(p, true); startWatch(); },
+    (e) => {
+      if (e.code === 3 || e.code === 2) {
+        // Retry once, coarser and more patient, before giving up.
+        navigator.geolocation.getCurrentPosition(
+          (p) => { showGps(p, true); startWatch(); },
+          (e2) => gpsError(e2, 'retry'),
+          { enableHighAccuracy: false, maximumAge: 600000, timeout: 30000 },
+        );
+      } else {
+        gpsError(e, 'initial');
+      }
+    },
+    { enableHighAccuracy: false, maximumAge: 60000, timeout: 12000 },
+  );
+}
+
+$('btnLocate').onclick = locate;
+
+// If permission was already granted on a previous visit, start passively — no
+// gesture needed and no prompt. Where the Permissions API is missing (older
+// iOS), we simply wait for the button, which is the reliable path anyway.
+if (navigator.permissions && navigator.permissions.query) {
+  navigator.permissions.query({ name: 'geolocation' })
+    .then((st) => { if (st.state === 'granted') startWatch(); })
+    .catch(() => {});
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
