@@ -151,8 +151,22 @@ def main():
     with open(os.path.join(DATA, "corridor.geojson"), "w") as f:
         json.dump(corridor_fc, f)
 
-    w, s = to_wgs84(minx, miny)
-    e, n = to_wgs84(maxx, maxy)
+    # A rectangle in SWEREF99 TM is not a rectangle in lon/lat — this area sits
+    # west of the 15E central meridian, so the grid rotates and the extreme
+    # longitude falls at a corner, not along an edge. Taking only the SW and NE
+    # corners understates the true extent, which would quietly clip anything
+    # fetched by this bbox. Sample all four corners plus the edges.
+    xs, ys = [], []
+    steps = 32
+    for i in range(steps + 1):
+        fx = minx + (maxx - minx) * i / steps
+        fy = miny + (maxy - miny) * i / steps
+        for px, py in ((fx, miny), (fx, maxy), (minx, fy), (maxx, fy)):
+            lon, lat = to_wgs84(px, py)
+            xs.append(lon)
+            ys.append(lat)
+    w, e = min(xs), max(xs)
+    s, n = min(ys), max(ys)
     grid = {
         "crs": SWEREF,
         "res_m": res,

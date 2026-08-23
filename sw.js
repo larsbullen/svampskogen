@@ -1,5 +1,5 @@
 /* Svampfinder service worker — offline app shell + tile caching */
-const SHELL = 'svampfinder-shell-v33';
+const SHELL = 'svampfinder-shell-v34';
 const TILES = 'svampfinder-tiles-v1';
 
 const CORE = [
@@ -29,6 +29,7 @@ const CORE = [
   './data/morgonsol/huts.geojson',
   './data/morgonsol/reserve.geojson',
   './data/morgonsol/meta.json',
+  './data/morgonsol/contours.geojson',
 ];
 
 self.addEventListener('install', (e) => {

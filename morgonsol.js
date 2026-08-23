@@ -42,10 +42,12 @@ const layers = {
   sites: L.layerGroup(),
   ban: L.layerGroup(),
   wetland: L.layerGroup(),
+  contours: L.layerGroup(),
   route: L.layerGroup(),
   huts: L.layerGroup(),
 };
 const LAYER_ORDER = [
+  ['contours', 'Höjdkurvor (20 m)', '#8a6a42', true],
   ['wetland', 'Myr / våtmark', '#6f8fa6', false],
   ['areas1', 'Bra mark', BAND_COLOR[1], true],
   ['areas2', 'Mycket bra mark', BAND_COLOR[2], true],
@@ -70,12 +72,14 @@ function fmtHour(h) {
 
 // ------------------------------------------------------------------- boot
 (async function boot() {
-  const [areas, sites, route, ban, wetland, huts, reserve, m] = await Promise.all([
+  const [areas, sites, route, ban, wetland, huts, reserve, m, contours] = await Promise.all([
     jget('areas.geojson'), jget('sites.geojson'), jget('route.geojson'),
     jget('zones.geojson'), jget('wetland.geojson'), jget('huts.geojson'),
-    jget('reserve.geojson'), jget('meta.json'),
+    jget('reserve.geojson'), jget('meta.json'), jget('contours.geojson'),
   ]);
   meta = m;
+
+  if (contours) setupContours(contours);
 
   if (reserve) {
     L.geoJSON(reserve, {
@@ -175,6 +179,77 @@ function fmtHour(h) {
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24] });
   } catch (e) { /* keep the default view */ }
 })();
+
+// ---------------------------------------------------------------- contours
+// Zoom-aware on purpose: 1004 lines at 20 m spacing is a legible map at z13 and
+// a brown smear at z10, so the minor lines only appear once they can be read,
+// and the index lines thin out rather than disappearing.
+let contourMinor = null;
+let contourIndex = null;
+const contourLabels = L.layerGroup();
+let contourIndexFeatures = [];
+
+function setupContours(gj) {
+  const feats = gj.features || [];
+  const split = (wantIndex) => ({
+    type: 'FeatureCollection',
+    features: feats.filter(f => !!f.properties.index === wantIndex),
+  });
+
+  contourMinor = L.geoJSON(split(false), {
+    renderer: canvas, interactive: false,
+    style: { color: '#8a6a42', weight: 0.6, opacity: 0.42 },
+  });
+  contourIndex = L.geoJSON(split(true), {
+    renderer: canvas, interactive: false,
+    style: { color: '#6d5230', weight: 1.3, opacity: 0.7 },
+  });
+  contourIndexFeatures = feats.filter(f => f.properties.index);
+
+  contourIndex.addTo(layers.contours);
+  contourMinor.addTo(layers.contours);
+  contourLabels.addTo(layers.contours);
+  counts.contours = feats.length;
+
+  map.on('zoomend moveend', refreshContours);
+  refreshContours();
+}
+
+function refreshContours() {
+  if (!contourMinor) return;
+  const z = map.getZoom();
+
+  // Minor lines are noise below z12.
+  if (z >= 12) {
+    if (!layers.contours.hasLayer(contourMinor)) contourMinor.addTo(layers.contours);
+    contourMinor.setStyle({ weight: z >= 14 ? 0.8 : 0.6, opacity: z >= 13 ? 0.5 : 0.35 });
+  } else if (layers.contours.hasLayer(contourMinor)) {
+    layers.contours.removeLayer(contourMinor);
+  }
+  if (contourIndex) {
+    contourIndex.setStyle({ weight: z >= 13 ? 1.6 : 1.1, opacity: z >= 11 ? 0.75 : 0.5 });
+  }
+
+  // Labels only where they fit, only in view, and capped so a pan never drops
+  // a hundred divIcons on the map at once.
+  contourLabels.clearLayers();
+  if (z < 13) return;
+  const bounds = map.getBounds();
+  let placed = 0;
+  for (const f of contourIndexFeatures) {
+    if (placed >= 40) break;
+    const cs = f.geometry.coordinates;
+    const mid = cs[Math.floor(cs.length / 2)];
+    const ll = L.latLng(mid[1], mid[0]);
+    if (!bounds.contains(ll)) continue;
+    L.marker(ll, {
+      interactive: false,
+      icon: L.divIcon({ className: '', html: `<span class="ctr-lbl">${f.properties.ele}</span>`,
+                        iconSize: [30, 12], iconAnchor: [15, 6] }),
+    }).addTo(contourLabels);
+    placed++;
+  }
+}
 
 // ------------------------------------------------------------------- sites
 function pinIcon(band, rank) {
@@ -306,6 +381,9 @@ function renderAbout() {
     </div>
     <p class="note"><b>Förbudsområden</b> kommer från Länsstyrelsens zonkarta
       (${meta.hard_masks.ban_zones}). Kontrollera alltid skyltning på plats.</p>
+    <p class="note"><b>Höjdkurvor</b> var 20:e meter (grövre linje var 100:e),
+      genererade ur samma höjdmodell som poängen — de stämmer alltså med
+      terrängen kartan räknat på. Minorkurvorna tänds först vid inzoomning.</p>
     <p class="note"><b>Källor:</b> ${p.dem}; myr/vatten/leder/stugor från OpenStreetMap;
       zoner och reservatsgräns från Länsstyrelsen Jämtland; markfuktighet: ${p.soil_moisture}.</p>
   `;

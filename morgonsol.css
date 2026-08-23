@@ -146,3 +146,15 @@ body {
 }
 .pin { display: grid; place-items: center; font-size: 11px; font-weight: 700;
   border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); color: #fff; }
+
+/* Contour elevation labels: readable over both the topo and satellite basemaps,
+   so they carry their own halo rather than relying on the ground behind them. */
+.ctr-lbl {
+  font: 600 10px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #5a4326;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  .ctr-lbl { color: #e6cfa8; text-shadow: 0 0 3px #14110d, 0 0 3px #14110d, 0 0 3px #14110d; }
+}
