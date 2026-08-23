@@ -139,16 +139,28 @@ function fmtHour(h) {
   }
 
   if (route) {
-    L.geoJSON(route, {
+    const lines = (route.features || []).filter(f => f.geometry.type === 'LineString');
+    L.geoJSON({ type: 'FeatureCollection', features: lines }, {
       renderer: canvas,
-      filter: (f) => f.geometry.type === 'LineString',
-      style: { color: '#2f4f8f', weight: 3.5, opacity: .95 },
-      interactive: false,
+      // Planned loop solid; alternative trails dashed, so a bail-out option is
+      // never mistaken for the route you meant to walk.
+      style: (f) => ((f.properties || {}).kind === 'segment'
+        ? { color: '#2f4f8f', weight: 2.5, opacity: .85, dashArray: '9 6' }
+        : { color: '#2f4f8f', weight: 3.5, opacity: .95 }),
+      onEachFeature: (f, lyr) => {
+        const p = f.properties || {};
+        if (p.kind === 'segment') {
+          lyr.bindPopup(`<div class="pop"><h3>↔ ${p.name}</h3>
+            <div class="why">Alternativ led, ${p.length_km} km — inte en del av
+            planerade rutten. Med i modellen ifall planen ändras.</div></div>`);
+        }
+      },
     }).addTo(layers.route);
-    const props = (route.features[0] || {}).properties || {};
+    const main = lines.find(f => (f.properties || {}).kind !== 'segment');
+    const props = (main || {}).properties || {};
     $('routeSub').textContent =
       `${props.length_km ?? '?'} km · ${props.ele_min}–${props.ele_max} m`;
-    counts.route = 1;
+    counts.route = lines.length;
   }
 
   if (huts) {
@@ -302,6 +314,11 @@ function pinIcon(band, rank) {
   });
 }
 
+// A site sitting on an added connecting trail rather than the planned loop.
+function isAlt(p) {
+  return (p.route || '').includes('–') ? 1 : 0;
+}
+
 function siteBand(p) {
   return p.score >= 0.82 ? 3 : 2;
 }
@@ -325,6 +342,7 @@ function sitePopup(p, lat, lon) {
   return `<div class="pop">
     <h3>#${p.rank} · ${BAND_NAME[siteBand(p)]}</h3>
     <dl>
+      ${row('Led', p.route || null)}
       ${row('Vid km', p.route_km !== null ? p.route_km.toFixed(1) : null)}
       ${row('Från leden', p.off_route_m !== null ? p.off_route_m + ' m' : null)}
       ${row('Höjd', p.elev_m + ' m')}
@@ -346,7 +364,8 @@ function renderSiteList(maxOff) {
   allSites
     .filter(f => (f.properties.off_route_m ?? 0) <= maxOff)
     .slice()
-    .sort((a, b) => (a.properties.route_km ?? 0) - (b.properties.route_km ?? 0))
+    .sort((a, b) => (isAlt(a.properties) - isAlt(b.properties))
+      || ((a.properties.route_km ?? 0) - (b.properties.route_km ?? 0)))
     .forEach((f) => {
       const p = f.properties;
       const [lon, lat] = f.geometry.coordinates;
@@ -356,6 +375,7 @@ function renderSiteList(maxOff) {
         <span class="meta">
           <span class="hd">km ${p.route_km !== null ? p.route_km.toFixed(1) : '?'} · ${p.elev_m} m · ${p.slope_deg}°</span>
           <span class="sm">${p.off_route_m} m från leden${p.water_m !== null ? ' · vatten ' + p.water_m + ' m' : ''} · sol ${fmtHour(p.first_light)}</span>
+          ${isAlt(p) ? `<span class="sm alt">↔ ${p.route}</span>` : ''}
         </span>`;
       li.onclick = () => {
         map.setView([lat, lon], 15);

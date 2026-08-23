@@ -195,3 +195,5 @@ body {
   font-size: 13px; line-height: 1.45; text-align: center;
 }
 .toast[hidden] { display: none; }
+
+.site .sm.alt { color: var(--accent); font-weight: 600; }

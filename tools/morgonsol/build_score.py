@@ -443,11 +443,18 @@ def main():
     lab, n = ndimage.label(top, structure=np.ones((3, 3)))
     print("candidate patches      : %d" % n)
 
-    route_geom = None
+    # Every LineString in route.geojson is a route you might walk — the GPX loop
+    # plus any connecting trail added by add_segment.py. A site is measured
+    # against whichever one is actually nearest, and says which.
+    routes = []
     with open(os.path.join(DATA, "route.geojson")) as f:
         for ft in json.load(f)["features"]:
             if ft["geometry"]["type"] == "LineString":
-                route_geom = shp_transform(to_sweref, shape(ft["geometry"]))
+                routes.append((
+                    (ft.get("properties") or {}).get("name") or "rutt",
+                    shp_transform(to_sweref, shape(ft["geometry"])),
+                ))
+    print("routes: %s" % ", ".join("%s (%.1f km)" % (n, g.length / 1000) for n, g in routes))
     hut_pts = [g.centroid for g in hut_geoms] if hut_geoms else []
 
     sizes = ndimage.sum(np.ones_like(score), lab, index=np.arange(1, n + 1))
@@ -462,8 +469,12 @@ def main():
         x, y = tf * (c + 0.5, r + 0.5)
         lon, lat = to_wgs84(x, y)
         p = Point(x, y)
-        along = route_geom.project(p) / 1000.0 if route_geom else None
-        off = route_geom.distance(p) if route_geom else None
+        if routes:
+            r_name, r_geom = min(routes, key=lambda kv: kv[1].distance(p))
+            along = r_geom.project(p) / 1000.0
+            off = r_geom.distance(p)
+        else:
+            r_name, along, off = None, None, None
         nearest_hut = min((p.distance(h) for h in hut_pts), default=None)
 
         why = []
@@ -503,6 +514,7 @@ def main():
                     "wetland_m": int(d_wetland[r, c]) if d_wetland[r, c] < 1e8 else None,
                     "hut_m": int(nearest_hut) if nearest_hut is not None else None,
                     "trail_m": int(d_trail[r, c]) if d_trail[r, c] < 1e8 else None,
+                    "route": r_name,
                     "route_km": round(along, 1) if along is not None else None,
                     "off_route_m": int(off) if off is not None else None,
                     "patch_m2": int(sizes[i] * res * res),
