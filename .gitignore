@@ -5,3 +5,6 @@ tmp/
 .cache/
 data/layers/targetgroup.geojson
 data/cloudfinds.geojson
+
+# Morgonsol: large intermediate rasters, all re-derivable from the tools
+data/morgonsol/dem_source.json

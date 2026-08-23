@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Morgonsol</title>
+  <meta name="description" content="Tältmarkskarta för Vålådalen — torr, plan mark och var det är förbjudet att övernatta." />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <meta name="robots" content="noai, noimageai" />
+  <meta name="theme-color" content="#c4611a" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14110d" media="(prefers-color-scheme: dark)" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Morgonsol" />
+  <link rel="stylesheet" href="vendor/leaflet.css" />
+  <link rel="stylesheet" href="morgonsol.css" />
+</head>
+<body>
+  <div id="map" aria-label="Karta"></div>
+
+  <button class="ctl menu-btn" id="menuBtn" aria-label="Öppna meny" aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+
+  <button class="ctl locate" id="btnLocate" aria-label="Visa min plats" title="Min plats">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm9 3h-2.06A7 7 0 0013 5.06V3h-2v2.06A7 7 0 005.06 11H3v2h2.06A7 7 0 0011 18.94V21h2v-2.06A7 7 0 0018.94 13H21v-2zm-9 6a5 5 0 110-10 5 5 0 010 10z"/></svg>
+  </button>
+
+  <section class="panel" id="panel" hidden>
+    <header class="panel-head">
+      <h1>Morgonsol</h1>
+      <span class="sub" id="routeSub"></span>
+      <button class="panel-close" id="panelClose" aria-label="Stäng">✕</button>
+    </header>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tabMap" role="tab" aria-selected="true">Lager</button>
+      <button class="tab" id="tabSites" role="tab" aria-selected="false">Platser</button>
+      <button class="tab" id="tabAbout" role="tab" aria-selected="false">Om</button>
+    </div>
+
+    <div class="panel-body" id="paneMap">
+      <ul class="legend" id="legend"></ul>
+      <div class="filters">
+        <div>
+          <label for="fOff">Max avstånd från leden: <b id="fOffVal">800</b> m</label>
+          <input type="range" id="fOff" min="100" max="2000" step="100" value="800" />
+        </div>
+      </div>
+      <p class="note" id="mapNote"></p>
+    </div>
+
+    <div class="panel-body" id="paneSites" hidden>
+      <p class="note" style="border:0;padding-top:0;margin-top:0">
+        Sorterade efter var de ligger längs leden, så du kan planera nätterna.
+      </p>
+      <ul class="sites" id="siteList"></ul>
+    </div>
+
+    <div class="panel-body" id="paneAbout" hidden>
+      <div id="aboutBody"></div>
+    </div>
+  </section>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="morgonsol.js"></script>
+</body>
+</html>

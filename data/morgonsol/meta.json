@@ -1,0 +1,63 @@
+{
+  "built_for_route": {
+    "name": "V\u00e5l\u00e5 fyrkant extended big time",
+    "length_km": 86.55,
+    "ascent_m": 1725,
+    "ele_min": 574,
+    "ele_max": 1225,
+    "n_points": 2552
+  },
+  "resolution_m": 10.0,
+  "weights": {
+    "level": 0.3,
+    "dry": 0.32,
+    "sun": 0.08,
+    "position": 0.13,
+    "smooth": 0.11,
+    "water": 0.06
+  },
+  "hard_masks": {
+    "slope_max_deg": 6.0,
+    "wetland_buffer_m": 25.0,
+    "water_min_m": 15.0,
+    "hut_clear_m": 150.0,
+    "trail_clear_m": 30.0,
+    "ban_zones": "7 restriction polygons applied (Blanktj\u00e4rn betr\u00e4dnadsf\u00f6rbud, Blanktj\u00e4rn \u00f6vernattningsf\u00f6rbud, Gr\u00f6nvallen \u00f6vernattningsf\u00f6rbud, Isj\u00f6dalen \u00f6vernattningsf\u00f6rbud, Pyramiderna betr\u00e4dnadsf\u00f6rbud, Pyramiderna \u00f6vernattningsf\u00f6rbud); 4 permissive zones ignored"
+  },
+  "bands": {
+    "bra": {
+      "min_score": 0.65,
+      "max_slope_deg": 4.5,
+      "min_dry": 0.5,
+      "max_rough_m": 3.5
+    },
+    "mycket bra": {
+      "min_score": 0.75,
+      "max_slope_deg": 3.0,
+      "min_dry": 0.65,
+      "max_rough_m": 2.2
+    },
+    "topp": {
+      "min_score": 0.82,
+      "max_slope_deg": 2.0,
+      "min_dry": 0.75,
+      "max_rough_m": 1.6
+    }
+  },
+  "provenance": {
+    "dem": "Lantmateriet Markhojdmodell 1 m DTM (bare earth, CC BY 4.0), on a 10 m grid",
+    "sun": "ray-cast terrain shadowing, NOAA solar position",
+    "ban_zones": "7 restriction polygons applied (Blanktj\u00e4rn betr\u00e4dnadsf\u00f6rbud, Blanktj\u00e4rn \u00f6vernattningsf\u00f6rbud, Gr\u00f6nvallen \u00f6vernattningsf\u00f6rbud, Isj\u00f6dalen \u00f6vernattningsf\u00f6rbud, Pyramiderna betr\u00e4dnadsf\u00f6rbud, Pyramiderna \u00f6vernattningsf\u00f6rbud); 4 permissive zones ignored",
+    "soil_moisture": "SLU Markfuktighetskarta (2 m, classified), 98.3% grid coverage"
+  },
+  "counts": {
+    "corridor_cells": 3221375,
+    "passing_cells": 1216189,
+    "areas": 2900,
+    "sites": 150,
+    "sites_before_thinning": 672,
+    "wetland_polygons": 1697,
+    "water_features": 552,
+    "huts": 15
+  }
+}

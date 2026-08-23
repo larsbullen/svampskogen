@@ -1,0 +1,148 @@
+/* Morgonsol — tältmarkskarta. Sunrise palette: sand -> amber -> ember. */
+:root {
+  --bg: #f6f1e8;
+  --surface: #fffdf9;
+  --surface-2: #f0e8db;
+  --ink: #241d15;
+  --ink-soft: #6b5d4c;
+  --line: #d9cdb9;
+  --accent: #c4611a;
+  --accent-ink: #fff;
+  --band1: #f2d9a0;
+  --band2: #e8a24a;
+  --band3: #cf5b1c;
+  --ban: #7b2fbe;
+  --route: #2f4f8f;
+  --shadow: 0 6px 24px rgba(60, 40, 15, .16);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14110d;
+    --surface: #1e1a15;
+    --surface-2: #2a241c;
+    --ink: #f2ece2;
+    --ink-soft: #a99781;
+    --line: #3a3227;
+    --accent: #e8873c;
+    --accent-ink: #1a1209;
+    --band1: #7a6434;
+    --band2: #c9822f;
+    --band3: #e2601d;
+    --ban: #b57bf0;
+    --route: #7ea2e8;
+    --shadow: 0 6px 24px rgba(0, 0, 0, .5);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+#map { position: absolute; inset: 0; background: var(--bg); }
+
+/* ---------------------------------------------------------------- controls */
+.ctl {
+  position: absolute; z-index: 900;
+  width: 44px; height: 44px; border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow);
+  display: grid; place-items: center; cursor: pointer;
+}
+.ctl:active { transform: scale(.96); }
+.menu-btn { top: calc(12px + env(safe-area-inset-top)); right: 12px; }
+.locate { bottom: calc(84px + env(safe-area-inset-bottom)); right: 12px; }
+
+/* ------------------------------------------------------------------ panel */
+.panel {
+  position: absolute; z-index: 950;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px; width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px - env(safe-area-inset-top));
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform-origin: top right;
+}
+.panel[hidden] { display: none; }
+.panel-head {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 14px 14px 8px;
+}
+.panel-head h1 { font-size: 18px; margin: 0; letter-spacing: -.01em; }
+.panel-head .sub { font-size: 12px; color: var(--ink-soft); margin-left: auto; }
+.panel-close {
+  margin-left: 6px; border: 0; background: none; color: var(--ink-soft);
+  font-size: 18px; cursor: pointer; line-height: 1;
+}
+.panel-body { overflow: auto; padding: 0 14px 14px; }
+
+.tabs { display: flex; gap: 4px; padding: 0 14px 10px; }
+.tab {
+  flex: 1; padding: 7px 6px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--line); background: var(--surface-2);
+  color: var(--ink-soft); border-radius: 9px; cursor: pointer;
+}
+.tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.legend { list-style: none; margin: 0 0 12px; padding: 0; }
+.legend li {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 0; font-size: 13px; cursor: pointer;
+}
+.legend .sw { width: 22px; height: 13px; border-radius: 3px; border: 1px solid rgba(0,0,0,.18); flex: none; }
+.legend .lbl { flex: 1; }
+.legend .n { color: var(--ink-soft); font-variant-numeric: tabular-nums; font-size: 12px; }
+.legend li.off { opacity: .4; }
+
+.note {
+  font-size: 12px; line-height: 1.5; color: var(--ink-soft);
+  border-top: 1px solid var(--line); padding-top: 10px; margin: 10px 0 0;
+}
+.note b { color: var(--ink); }
+.warn {
+  font-size: 12px; line-height: 1.5;
+  background: color-mix(in srgb, var(--ban) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ban) 35%, transparent);
+  color: var(--ink); border-radius: 9px; padding: 9px 10px; margin: 10px 0 0;
+}
+
+/* ------------------------------------------------------------- site list */
+.sites { list-style: none; margin: 0; padding: 0; }
+.site {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 9px 0; border-bottom: 1px solid var(--line); cursor: pointer;
+}
+.site:last-child { border-bottom: 0; }
+.site .rank {
+  flex: none; width: 26px; height: 26px; border-radius: 8px;
+  display: grid; place-items: center; font-size: 12px; font-weight: 700;
+  background: var(--band2); color: #1a1209;
+}
+.site.b3 .rank { background: var(--band3); color: #fff; }
+.site .meta { flex: 1; min-width: 0; }
+.site .hd { font-size: 13px; font-weight: 600; }
+.site .sm { font-size: 12px; color: var(--ink-soft); }
+
+/* ------------------------------------------------------------------ popup */
+.leaflet-popup-content { margin: 11px 13px; font-size: 13px; }
+.pop h3 { margin: 0 0 5px; font-size: 14px; }
+.pop dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 0 0; }
+.pop dt { color: var(--ink-soft); font-size: 12px; }
+.pop dd { margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.pop .why { margin: 6px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+.filters { display: grid; gap: 9px; margin-bottom: 12px; }
+.filters label { font-size: 12px; color: var(--ink-soft); display: block; margin-bottom: 3px; }
+.filters input[type="range"] { width: 100%; accent-color: var(--accent); }
+.gps-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #1e73e8; border: 2.5px solid #fff;
+  box-shadow: 0 0 0 2px rgba(30,115,232,.35);
+}
+.pin { display: grid; place-items: center; font-size: 11px; font-weight: 700;
+  border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); color: #fff; }

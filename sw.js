@@ -1,5 +1,5 @@
 /* Svampfinder service worker — offline app shell + tile caching */
-const SHELL = 'svampfinder-shell-v32';
+const SHELL = 'svampfinder-shell-v33';
 const TILES = 'svampfinder-tiles-v1';
 
 const CORE = [
@@ -18,6 +18,17 @@ const CORE = [
   './vendor/marker-icon-2x.png',
   './vendor/marker-shadow.png',
   './icons/icon.svg',
+  './morgonsol.html',
+  './morgonsol.css',
+  './morgonsol.js',
+  './data/morgonsol/areas.geojson',
+  './data/morgonsol/sites.geojson',
+  './data/morgonsol/route.geojson',
+  './data/morgonsol/zones.geojson',
+  './data/morgonsol/wetland.geojson',
+  './data/morgonsol/huts.geojson',
+  './data/morgonsol/reserve.geojson',
+  './data/morgonsol/meta.json',
 ];
 
 self.addEventListener('install', (e) => {
@@ -64,7 +75,9 @@ self.addEventListener('fetch', (e) => {
           return res;
         } catch {
           const hit = await cache.match(req);
-          return hit || (req.mode === 'navigate' ? cache.match('./index.html') : undefined);
+          if (hit) return hit;
+          if (req.mode !== 'navigate') return undefined;
+          return cache.match(url.pathname.includes('morgonsol') ? './morgonsol.html' : './index.html');
         }
       })
     );
