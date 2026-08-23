@@ -72,12 +72,15 @@ function fmtHour(h) {
 
 // ------------------------------------------------------------------- boot
 (async function boot() {
-  const [areas, sites, route, ban, wetland, huts, reserve, m, contours] = await Promise.all([
-    jget('areas.geojson'), jget('sites.geojson'), jget('route.geojson'),
-    jget('zones.geojson'), jget('wetland.geojson'), jget('huts.geojson'),
-    jget('reserve.geojson'), jget('meta.json'), jget('contours.geojson'),
-  ]);
+  const [areas, sites, route, ban, wetland, huts, reserve, m, contours, weather] =
+    await Promise.all([
+      jget('areas.geojson'), jget('sites.geojson'), jget('route.geojson'),
+      jget('zones.geojson'), jget('wetland.geojson'), jget('huts.geojson'),
+      jget('reserve.geojson'), jget('meta.json'), jget('contours.geojson'),
+      jget('weather.json'),
+    ]);
   meta = m;
+  if (weather) renderWeather(weather);
 
   if (contours) setupContours(contours);
 
@@ -179,6 +182,44 @@ function fmtHour(h) {
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24] });
   } catch (e) { /* keep the default view */ }
 })();
+
+// ----------------------------------------------------------------- weather
+// The scores are structural — where water collects given terrain and soil, true
+// in any weather. This is the other half: whether the ground is currently wetter
+// or drier than it usually is here at this time of year, ranked against every
+// year the nearest station has recorded.
+function renderWeather(w) {
+  const el = $('wx');
+  if (!el) return;
+  const pct = w.api_percentile;
+  const cls = pct === null || pct === undefined ? 'norm'
+    : pct >= 70 ? 'wet' : pct <= 30 ? 'dry' : 'norm';
+
+  const days = (w.forecast || []).filter(f => f.available).map((f) => {
+    const d = new Date(f.date + 'T12:00:00');
+    const name = d.toLocaleDateString('sv-SE', { weekday: 'short' });
+    const rain = f.precip_mm || 0;
+    return `<div class="wx-day${rain >= 1 ? ' rain' : ''}">
+      <div class="d">${name}</div>
+      <div class="t">${Math.round(f.t_max)}°</div>
+      <div class="r">${rain >= 0.1 ? rain.toFixed(1) + ' mm' : '–'}</div>
+    </div>`;
+  }).join('');
+
+  const r = w.rain_mm || {};
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="wx-head">
+      <span class="wx-chip ${cls}">${w.wetness_band}</span>
+      <span class="wx-obs">obs t.o.m. ${w.observed_to}</span>
+    </div>
+    <p class="wx-advice">${w.advice || ''}</p>
+    ${days ? `<div class="wx-days">${days}</div>` : ''}
+    <p class="wx-src">Regn ${r.last_7d ?? '?'} mm senaste veckan,
+      ${r.last_30d ?? '?'} mm senaste månaden — blötare än ${pct}% av samma
+      period ${w.climatology_years} vid ${w.station_precip ? w.station_precip.name : '?'}
+      (${w.station_precip ? w.station_precip.km : '?'} km). SMHI öppna data.</p>`;
+}
 
 // ---------------------------------------------------------------- contours
 // Zoom-aware on purpose: 1004 lines at 20 m spacing is a legible map at z13 and

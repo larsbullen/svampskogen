@@ -158,3 +158,26 @@ body {
 @media (prefers-color-scheme: dark) {
   .ctr-lbl { color: #b39a75; text-shadow: 0 0 2px #14110d, 0 0 2px #14110d; }
 }
+
+/* ------------------------------------------------------------------ weather */
+.wx { margin: 0 0 12px; }
+.wx-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.wx-chip {
+  font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+}
+.wx-chip.wet  { background: #cfe0ee; color: #1c3a52; border-color: #a9c6dc; }
+.wx-chip.norm { background: #e6e0d2; color: #4a4030; border-color: #cfc4ae; }
+.wx-chip.dry  { background: #f3ddb6; color: #6a4a17; border-color: #ddc496; }
+.wx-obs { font-size: 11px; color: var(--ink-soft); margin-left: auto; }
+.wx-advice { font-size: 12px; line-height: 1.5; color: var(--ink); margin: 0 0 8px; }
+.wx-days { display: flex; gap: 4px; }
+.wx-day {
+  flex: 1; min-width: 0; text-align: center; padding: 5px 2px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+}
+.wx-day .d { font-size: 10px; color: var(--ink-soft); text-transform: capitalize; }
+.wx-day .t { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wx-day .r { font-size: 10px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.wx-day.rain { background: color-mix(in srgb, #6f8fa6 18%, var(--surface-2)); }
+.wx-src { font-size: 11px; color: var(--ink-soft); margin: 7px 0 0; }

@@ -1,0 +1,90 @@
+{
+  "generated": "2026-08-23",
+  "observed_to": "2026-08-22",
+  "station_precip": {
+    "id": 133100,
+    "name": "Vallbo",
+    "km": 15.9,
+    "height_m": 582
+  },
+  "station_temp": {
+    "id": 132030,
+    "name": "Sylarna A",
+    "km": 28.0,
+    "height_m": 1030
+  },
+  "rain_mm": {
+    "last_3d": 16.6,
+    "last_7d": 28.6,
+    "last_14d": 52.7,
+    "last_30d": 111.1
+  },
+  "api": 37.6,
+  "api_percentile": 81,
+  "climatology_samples": 840,
+  "climatology_years": "1945-2026",
+  "wetness_band": "blötare än normalt",
+  "advice": "Marken är blötare än den brukar vara så här års. Håll dig till topp-marken och små höjdryggar — de gula, marginella ytorna är sannolikt blötare än kartan antyder. Men prognosen är i stort sett torr (0.1 mm på 5 dagar), så marken torkar upp efter hand — det blir bättre mot slutet av turen än i början. Kallaste natten ligger runt 2°C och vinden är svag — då rinner kalluften ner i svackorna, så kartans läges-poäng (små höjdryggar) är värd extra mycket.",
+  "trip": {
+    "start": "2026-08-24",
+    "days": 5,
+    "forecast_rain_mm": 0.1
+  },
+  "forecast": [
+    {
+      "date": "2026-08-24",
+      "available": true,
+      "precip_mm": 0.0,
+      "precip_prob": 3,
+      "t_min": 5.0,
+      "t_max": 10.3,
+      "wind_ms": 3.4,
+      "gust_ms": 9.0,
+      "frozen_risk": 1
+    },
+    {
+      "date": "2026-08-25",
+      "available": true,
+      "precip_mm": 0.0,
+      "precip_prob": 0,
+      "t_min": 2.4,
+      "t_max": 15.5,
+      "wind_ms": 1.7,
+      "gust_ms": 5.3,
+      "frozen_risk": 0
+    },
+    {
+      "date": "2026-08-26",
+      "available": true,
+      "precip_mm": 0.1,
+      "precip_prob": 15,
+      "t_min": 5.5,
+      "t_max": 17.1,
+      "wind_ms": 1.6,
+      "gust_ms": 5.6,
+      "frozen_risk": 0
+    },
+    {
+      "date": "2026-08-27",
+      "available": true,
+      "precip_mm": 0.0,
+      "precip_prob": 4,
+      "t_min": 9.0,
+      "t_max": 15.9,
+      "wind_ms": 2.5,
+      "gust_ms": 9.8,
+      "frozen_risk": 0
+    },
+    {
+      "date": "2026-08-28",
+      "available": true,
+      "precip_mm": 0.0,
+      "precip_prob": 4,
+      "t_min": 8.3,
+      "t_max": 14.2,
+      "wind_ms": 4.0,
+      "gust_ms": 14.4,
+      "frozen_risk": 0
+    }
+  ]
+}
